@@ -1,0 +1,56 @@
+﻿@model IEnumerable<WorkcenterStatusLog>
+
+@{
+    ViewData["Title"] = "Log";
+}
+
+<h1>Log</h1>
+
+<form asp-action="Log" method="get">
+    <div>
+        <label for="startDate">Start Date:</label>
+        <input type="date" name="startDate" value="@Context.Request.Query["startDate"]">
+    </div>
+    <div>
+        <label for="endDate">End Date:</label>
+        <input type="date" name="endDate" value="@Context.Request.Query["endDate"]">
+    </div>
+    <div>
+        <label for="workcenterID">Workcenter:</label>
+        <select name="workcenterID">
+            <option value="" selected>All</option>
+            @foreach (var workcenterID in ViewBag.Workcenters)
+            {
+                <option value="@workcenterID">@workcenterID</option>
+            }
+        </select>
+    </div>
+    <button type="submit">Filter</button>
+</form>
+
+@if (Context.Request.Query.Keys.Contains("startDate") || Context.Request.Query.Keys.Contains("endDate") || Context.Request.Query.Keys.Contains("workcenterID"))
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Workcenter ID</th>
+            <th>Alarm type</th>
+            <th>Old Status</th>
+            <th>New Status</th>
+            <th>Change Date Time</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var logEntry in Model)
+        {
+            <tr>
+                <td>@logEntry.WorkcenterID</td>
+                <td>@ViewBag.StatusDefinitions[logEntry.StatusIndex].StatusName</td>
+                <td>@logEntry.OldStatus</td>
+                <td>@logEntry.NewStatus</td>
+                <td>@logEntry.ChangeDateTime</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

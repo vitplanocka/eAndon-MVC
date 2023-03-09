@@ -1,0 +1,41 @@
+﻿@model List<AndonTerminalModel>
+
+@{
+    ViewBag.Title = "Overview";
+    var statusNames = Model[0].StatusDefinitions.Where(s => s.StatusEnabled).ToList(); 
+}
+<h2>@ViewBag.Title.</h2>
+<h3>@ViewBag.Message</h3>
+
+
+<div class="text-center">
+
+    <table style="border: 1px solid black; font-family: Verdana; color: #444;">
+        <thead>
+        <tr>
+            <th>Workcenter</th>
+            @foreach (var statusName in statusNames)
+            {
+                <th>@statusName.StatusName</th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var workcenter in Model)
+        {
+            <tr>
+                <td>@workcenter.WorkcenterID</td>
+                @for (var statusIndex = 0; statusIndex < workcenter.StatusValues.Count(); statusIndex++)
+                {
+                    var statusDefinition = workcenter.StatusDefinitions[statusIndex];
+                    if (statusDefinition.StatusEnabled)
+                    {
+                        var statusValue = workcenter.StatusValues[statusIndex];
+                        <td id="status_@statusIndex" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                    }
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

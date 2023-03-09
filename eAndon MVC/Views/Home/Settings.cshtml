@@ -1,0 +1,158 @@
+﻿@model List<StatusDefinition>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    
+    <style>
+        .workcenter {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .workcenter-row {
+            text-align: center;
+        }
+    </style>
+</head>
+
+
+
+<body>
+<div class="container">
+    <h1>Settings</h1>
+
+    <h2>Workcenters</h2>
+    
+    <table class="table">
+    <thead>
+        <tr>
+            <th>Workcenter Row</th>
+            <th>Workcenter ID (unique)</th>
+            <th>Workcenter Name</th>
+            <th></th>
+        </tr>
+    </thead>
+            <tbody>
+                @foreach (var workcenter in ViewBag.Workcenters)
+                {
+                    <tr>
+                        <td class="workcenter">
+                            @if (ViewBag.Workcenters.IndexOf(workcenter) > 0)
+                            {
+                                <form method="post" asp-controller="Settings" asp-action="MoveWorkcenterUp">
+                                    <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                    <button type="submit" class="btn btn-primary"><b>↑</b></button>
+                                </form>
+                            }
+                            &nbsp;&nbsp;
+                            <span class="workcenter-row">@workcenter.WorkcenterRow</span>
+                            &nbsp;&nbsp;
+                            @if (ViewBag.Workcenters.IndexOf(workcenter) < ViewBag.Workcenters.Count - 1)
+                            {
+                                <form method="post" asp-controller="Settings" asp-action="MoveWorkcenterDown">
+                                    <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                    <button type="submit" class="btn btn-primary"><b>↓</b></button>
+                                </form>
+                            }
+                        </td>
+                        <td>
+                            <form method="post" asp-controller="Settings" asp-action="UpdateWorkcenterID">
+                                <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                <input type="text" name="workcenterID" value="@workcenter.WorkcenterID" />
+                                <button type="submit" class="btn btn-primary">Save ID</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" asp-controller="Settings" asp-action="UpdateWorkcenterName">
+                                <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                <input type="text" name="workcenterName" value="@workcenter.WorkcenterName" />
+                                <button type="submit" class="btn btn-primary">Save Name</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" asp-controller="Settings" asp-action="DeleteWorkcenter">
+                                <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                <button type="submit" class="btn btn-primary">Delete workcenter</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            <tr>
+                <form method="post" asp-controller="Settings" asp-action="AddWorkcenter">
+                    <td class="workcenter">
+                        <span class="workcenter-row">@(ViewBag.Workcenters.Count + 1)</span>
+                    </td>
+                    <td>
+                        <input type="text" name="newWorkcenterID" placeholder="Workcenter ID (unique)" />
+                    </td>
+                    <td>
+                        <input type="text" name="newWorkcenterName" placeholder="Workcenter Name" />
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-primary">Add workcenter</button>
+                    </td>
+                    <input type="hidden" name="workcenterRow" value="@(ViewBag.Workcenters.Count + 1)" />
+                </form>
+            </tr>
+
+
+            </tbody>
+    </table>
+    
+
+    <h2>Alarm types</h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Alarm row</th>
+            <th>Alarm type name</th>
+            <th>Alarm type enabled</th>
+            <th>Alarm details enabled</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var status in Model)
+        {
+            <tr>
+                <td>@status.StatusRow</td>
+                <td>
+                    <form method="post" asp-controller="Settings" asp-action="UpdateAlarmTypeName">
+                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                        <input type="text" name="statusName" value="@status.StatusName" />
+                        <button type="submit" class="btn btn-primary">Save Name</button>
+                    </form>
+                </td>
+
+                <td>
+                    <form method="post" asp-controller="Settings" asp-action="UpdateStatusEnabled">
+                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                        <select name="statusEnabled" onchange="this.form.submit()">
+                            <option value="True" selected="@status.StatusEnabled">Yes</option>
+                            <option value="False" selected="@(status.StatusEnabled == false)">No</option>
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" asp-controller="Settings" asp-action="UpdateAlarmDetailsEnabled">
+                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                        <select name="statusDetailsEnabled" onchange="this.form.submit()">
+                                    <option value="1" selected="@(status.StatusDetailsEnabled == 1)">Details enabled</option>
+                                    <option value="0" selected="@(status.StatusDetailsEnabled == 0)">No details</option>
+                        </select>
+                    </form>
+                </td>
+                <td><form method="post" asp-controller="Settings" asp-action="DeactivateAlarmType">
+                    <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                    <button type="submit" class="btn btn-primary">Deactivate alarm type</button></form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+﻿@model AndonTerminalModel
+
+@{
+    ViewData["Title"] = "Andon Terminal";
+    var statusNames = Model.StatusDefinitions.Where(s => s.StatusEnabled).ToList(); 
+}
+<div class="text-center">
+    <h1>Andon Terminal for workcenter @Model.WorkcenterID - @Model.WorkcenterName</h1>
+    <table style="border: 1px solid black; font-family: Verdana; color: #444;">
+        <thead>
+        <tr>
+            @foreach (var statusName in statusNames)
+            {
+                <th>@statusName.StatusName</th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            @for (var statusIndex = 0; statusIndex < Model.StatusValues.Count(); statusIndex++)
+            {
+                var statusDefinition = Model.StatusDefinitions[statusIndex];
+                if (statusDefinition.StatusEnabled)
+                {
+                    var statusValue = Model.StatusValues[statusIndex];
+                    <td id="status_@statusIndex" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                }
+            }
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script>
+    function updateStatus(workcenterID, statusIndex) {
+        const statusTD = document.getElementById(`status_${statusIndex}`);
+
+        fetch(`/Home/UpdateStatus?workcenterID=${workcenterID}&statusIndex=${statusIndex}`)
+            .then(response => response.text())
+            .then(newStatus => {
+                statusTD.style.backgroundColor = newStatus === "green" ? "green" : "red";
+                statusTD.textContent = newStatus;
+            });
+    }
+</script>

@@ -1,0 +1,8 @@
+﻿ - Make WorkcenterName in dbo.WorkcenterList unique
+
+
+- navbar vertical
+
+- odstranit warningy
+- prekopirovat do replu
+

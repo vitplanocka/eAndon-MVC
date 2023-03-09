@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eAndon MVC", "eAndon MVC\eAndon MVC.csproj", "{CC3FEC84-0971-4CE8-A19A-C73DCAC41796}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CC3FEC84-0971-4CE8-A19A-C73DCAC41796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC3FEC84-0971-4CE8-A19A-C73DCAC41796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC3FEC84-0971-4CE8-A19A-C73DCAC41796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC3FEC84-0971-4CE8-A19A-C73DCAC41796}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59A7E187-DCF1-4C7E-AD6D-F9EBE6595C4F}
+	EndGlobalSection
+EndGlobal
