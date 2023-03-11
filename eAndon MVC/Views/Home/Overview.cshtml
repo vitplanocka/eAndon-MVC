@@ -25,13 +25,16 @@
         {
             <tr>
                 <td>@workcenter.WorkcenterID</td>
-                @for (var statusIndex = 0; statusIndex < workcenter.StatusValues.Count(); statusIndex++)
+                @if (workcenter.StatusValues != null)
                 {
-                    var statusDefinition = workcenter.StatusDefinitions[statusIndex];
-                    if (statusDefinition.StatusEnabled)
+                    for (var statusIndex = 0; statusIndex < workcenter.StatusValues.Count(); statusIndex++)
                     {
-                        var statusValue = workcenter.StatusValues[statusIndex];
-                        <td id="status_@statusIndex" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                        var statusDefinition = workcenter.StatusDefinitions[statusIndex];
+                        if (statusDefinition.StatusEnabled)
+                        {
+                            var statusValue = workcenter.StatusValues[statusIndex];
+                            <td id="status_@(statusIndex)" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                        }
                     }
                 }
             </tr>

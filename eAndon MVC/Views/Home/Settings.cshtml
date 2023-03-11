@@ -118,7 +118,26 @@
         @foreach (var status in Model)
         {
             <tr>
-                <td>@status.StatusRow</td>
+                <td class="workcenter">
+                @if (Model.IndexOf(status) > 0)
+                {
+                    <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeUp">
+                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                        <button type="submit" class="btn btn-primary"><b>↑</b></button>
+                    </form>
+                }
+                &nbsp;&nbsp;
+                <span class="workcenter-row">@status.StatusRow</span>
+                &nbsp;&nbsp;
+                @if (Model.IndexOf(status) < Model.Count - 1)
+                {
+                    <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeDown">
+                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                        <button type="submit" class="btn btn-primary"><b>↓</b></button>
+                    </form>
+                }
+                </td>
+
                 <td>
                     <form method="post" asp-controller="Settings" asp-action="UpdateAlarmTypeName">
                         <input type="hidden" name="statusRow" value="@status.StatusRow" />
@@ -144,10 +163,6 @@
                                     <option value="0" selected="@(status.StatusDetailsEnabled == 0)">No details</option>
                         </select>
                     </form>
-                </td>
-                <td><form method="post" asp-controller="Settings" asp-action="DeactivateAlarmType">
-                    <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                    <button type="submit" class="btn btn-primary">Deactivate alarm type</button></form>
                 </td>
             </tr>
         }

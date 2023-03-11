@@ -2,7 +2,15 @@
 
 
 - navbar vertical
+- bootstrap
 
-- odstranit warningy
-- prekopirovat do replu
+- preklady
+- zrezetovani vstupnich dat
+- nahravani obrazku do typu alarmu
+
+
+
+LOG
+- do logu misto status index radeji typ alarmu, protoze status index se muze menit
+- spojit pomoci ID zacatek a konec alarmu
 

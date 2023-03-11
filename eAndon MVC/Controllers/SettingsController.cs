@@ -148,13 +148,17 @@ namespace eAndon_MVC.Controllers
             foreach (var wc in workcentersToUpdate)
             {
                 var lowerWc = await _db.WorkcenterList.FindAsync(wc.WorkcenterRow - 1);
-                wc.WorkcenterID = lowerWc.WorkcenterID; // Update WorkcenterID
-                wc.WorkcenterName = lowerWc.WorkcenterName; // Update WorkcenterName
-                wc.Status1 = lowerWc.Status1;
-                wc.Status2 = lowerWc.Status2;
-                wc.Status3 = lowerWc.Status3;
-                wc.Status4 = lowerWc.Status4;
-                wc.Status5 = lowerWc.Status5;
+                if (lowerWc != null)
+                {
+                    wc.WorkcenterID = lowerWc.WorkcenterID; // Update WorkcenterID
+                    wc.WorkcenterName = lowerWc.WorkcenterName; // Update WorkcenterName
+                    wc.Status1 = lowerWc.Status1;
+                    wc.Status2 = lowerWc.Status2;
+                    wc.Status3 = lowerWc.Status3;
+                    wc.Status4 = lowerWc.Status4;
+                    wc.Status5 = lowerWc.Status5;
+                }
+
                 _db.Entry(wc).State = EntityState.Modified;
             }
 
@@ -219,7 +223,7 @@ namespace eAndon_MVC.Controllers
             var status = _db.WorkcenterList.FirstOrDefault(s => s.WorkcenterRow == workcenterRow);
 
             // Update the StatusName property of the StatusDefinition object
-            status.WorkcenterName = workcenterName;
+            if (status != null) status.WorkcenterName = workcenterName;
 
             // Save changes to the database
             _db.SaveChanges();
@@ -235,7 +239,7 @@ namespace eAndon_MVC.Controllers
             var status = _db.WorkcenterList.FirstOrDefault(s => s.WorkcenterRow == workcenterRow);
 
             // Update the StatusName property of the StatusDefinition object
-            status.WorkcenterID = workcenterID;
+            if (status != null) status.WorkcenterID = workcenterID;
 
             // Save changes to the database
             _db.SaveChanges();
@@ -248,34 +252,91 @@ namespace eAndon_MVC.Controllers
         #endregion
 
         #region AlarmTypes
-
-
-
-        public IActionResult DeactivateAlarmType(int statusRow)
+        
+        [HttpPost]
+        public async Task<IActionResult> MoveAlarmTypeUp(int statusRow)
         {
-            // Retrieve the StatusDefinition object with the given StatusRow
-            var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
+            // Find the alarm type with the given row number
+            var status = await _db.StatusDefinition.FindAsync(statusRow);
+            if (status == null)
+            {
+                return NotFound();
+            }
+    
+            // Find the alarm type with the row number one less than the given row number
+            var prevStatus = await _db.StatusDefinition.FirstOrDefaultAsync(w => w.StatusRow == statusRow - 1);
+            if (prevStatus == null)
+            {
+                return BadRequest("Cannot move status up any further");
+            }
+    
+            // Swap the other fields of the two alarm types
 
-            // Update the properties of the StatusDefinition object
-            status.StatusName = "--unused--";
-            status.StatusEnabled = false;
-            status.StatusDetailsEnabled = 0;
+            var tempStatusName = status.StatusName;
+            var tempStatusEnabled = status.StatusEnabled;
+            var tempStatusDetailsEnabled = status.StatusDetailsEnabled;
+
+            status.StatusName = prevStatus.StatusName;
+            status.StatusEnabled = prevStatus.StatusEnabled;
+            status.StatusDetailsEnabled = prevStatus.StatusDetailsEnabled;
+   
+            prevStatus.StatusName = tempStatusName;
+            prevStatus.StatusEnabled = tempStatusEnabled;
+            prevStatus.StatusDetailsEnabled = tempStatusDetailsEnabled;
 
             // Save changes to the database
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
-            // Redirect back to the Settings page
-            return RedirectToAction("Settings", "Settings");
+            return RedirectToAction("Settings");
         }
+
+        
+        [HttpPost]
+        public async Task<IActionResult> MoveAlarmTypeDown(int statusRow)
+        {
+            // Find the alarm type with the given row number
+            var status = await _db.StatusDefinition.FindAsync(statusRow);
+            if (status == null)
+            {
+                return NotFound();
+            }
+    
+            // Find the alarm type with the row number one more than the given row number
+            var nextStatus = await _db.StatusDefinition.FirstOrDefaultAsync(w => w.StatusRow == statusRow + 1);
+            if (nextStatus == null)
+            {
+                return BadRequest("Cannot move status down any further");
+            }
+    
+            // Swap the other fields of the two alarm types
+
+            var tempStatusName = status.StatusName;
+            var tempStatusEnabled = status.StatusEnabled;
+            var tempStatusDetailsEnabled = status.StatusDetailsEnabled;
+
+            status.StatusName = nextStatus.StatusName;
+            status.StatusEnabled = nextStatus.StatusEnabled;
+            status.StatusDetailsEnabled = nextStatus.StatusDetailsEnabled;
+   
+            nextStatus.StatusName = tempStatusName;
+            nextStatus.StatusEnabled = tempStatusEnabled;
+            nextStatus.StatusDetailsEnabled = tempStatusDetailsEnabled;
+
+            // Save changes to the database
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction("Settings");
+        }
+
 
         [HttpPost]
         public IActionResult UpdateStatusEnabled(int statusRow, bool statusEnabled)
         {
             // Retrieve the StatusDefinition object with the given StatusRow
-            StatusDefinition status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
+            var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
 
             // Update the StatusEnabled property of the StatusDefinition object
-            status.StatusEnabled = statusEnabled;
+            if (status != null) status.StatusEnabled = statusEnabled;
 
             // Save changes to the database
             _db.SaveChanges();
@@ -291,7 +352,7 @@ namespace eAndon_MVC.Controllers
             var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
 
             // Update the StatusEnabled property of the StatusDefinition object
-            status.StatusDetailsEnabled = statusDetailsEnabled;
+            if (status != null) status.StatusDetailsEnabled = statusDetailsEnabled;
 
             // Save changes to the database
             _db.SaveChanges();
@@ -307,7 +368,7 @@ namespace eAndon_MVC.Controllers
             var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
 
             // Update the StatusName property of the StatusDefinition object
-            status.StatusName = statusName;
+            if (status != null) status.StatusName = statusName;
 
             // Save changes to the database
             _db.SaveChanges();

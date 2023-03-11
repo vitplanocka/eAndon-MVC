@@ -4,6 +4,9 @@
     ViewData["Title"] = "Andon Terminal";
     var statusNames = Model.StatusDefinitions.Where(s => s.StatusEnabled).ToList(); 
 }
+
+
+
 <div class="text-center">
     <h1>Andon Terminal for workcenter @Model.WorkcenterID - @Model.WorkcenterName</h1>
     <table style="border: 1px solid black; font-family: Verdana; color: #444;">
@@ -17,13 +20,30 @@
         </thead>
         <tbody>
         <tr>
-            @for (var statusIndex = 0; statusIndex < Model.StatusValues.Count(); statusIndex++)
+            @for (var statusIndex = 0; statusIndex < Model.StatusValues!.Count(); statusIndex++)
             {
                 var statusDefinition = Model.StatusDefinitions[statusIndex];
                 if (statusDefinition.StatusEnabled)
                 {
-                    var statusValue = Model.StatusValues[statusIndex];
-                    <td id="status_@statusIndex" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                    if (Model.StatusValues != null)
+                    {
+                        var statusValue = Model.StatusValues[statusIndex];
+                            if (statusValue.Split("|")[0] == "green")
+                            {
+                                @:
+                                <td id="status_@(statusIndex)" class="green-bg" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="cursor: pointer;">&nbsp;</td>
+                        }
+                        else {
+                            var statusDateTime = statusValue.Split('|');
+                            var statusSeconds = statusDateTime.Length > 1 ?
+                                Math.Round((DateTime.Now - DateTime.Parse(statusDateTime[1])).TotalSeconds) :
+                                0;
+                            @:
+                            <td id="status_@(statusIndex)" class="red-bg" data-statusDateTime="@statusValue.Split("|")[1]" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="cursor: pointer;">
+                                <span id="statusSeconds_@(statusIndex)" class="status-seconds">@(statusSeconds)s</span>
+                            </td>
+                        }
+                    }
                 }
             }
         </tr>
@@ -37,8 +57,69 @@
         fetch(`/Home/UpdateStatus?workcenterID=${workcenterID}&statusIndex=${statusIndex}`)
             .then(response => response.text())
             .then(newStatus => {
-                statusTD.style.backgroundColor = newStatus === "green" ? "green" : "red";
-                statusTD.textContent = newStatus;
+                if (newStatus.split("|")[0] === "green") {
+                    statusTD.classList.remove("red-bg");
+                    statusTD.classList.add("green-bg");
+                    statusTD.textContent = "";
+                } else {
+                    statusTD.classList.remove("green-bg");
+                    statusTD.classList.add("red-bg");
+                    const statusDateTime = newStatus.split('|')[1];
+                    statusTD.setAttribute("data-statusDateTime", statusDateTime);
+                    const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+                    statusTD.textContent = `${newStatusSeconds}s`;
+                    
+                    updateStatusSeconds(statusTD);
+                }
             });
     }
+
+    function updateStatusSeconds(statusTD) {
+        const statusSecondsSpan = statusTD.querySelector(".status-seconds");
+        const statusDateTime = statusTD.getAttribute("data-statusDateTime");
+        
+        setInterval(() => {
+            const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+            statusSecondsSpan.textContent = `${newStatusSeconds}s`;
+        }, 1000);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const redBgCells = document.querySelectorAll(".red-bg");
+        redBgCells.forEach(cell => {
+            updateStatusSeconds(cell);
+        });
+    });
 </script>
+
+
+<style>
+    table {
+        border-collapse: separate;
+        border-spacing: 5px;
+    }
+
+    td {
+        width: 100px;
+        padding: 10px; /* add margin inside the td */
+        border-radius: 10px; /* add rounded corners */
+    }
+
+    .green-bg, .red-bg {
+        height: 50px;
+    }
+
+    .green-bg {
+        background-color: green;
+        cursor: pointer;
+        border: 7px solid darkgreen; /* add outline with darker color */
+    }
+
+    .red-bg {
+        background-color: red;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        border: 7px solid darkred; /* add outline with darker color */
+    }
+</style>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Globalization;
 using eAndon_MVC.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,29 +29,36 @@ namespace eAndon_MVC.Controllers
             var currentOverview = _db.WorkcenterList?.OrderBy(w => w.WorkcenterRow).ToList();
             var currentOverviewModel = new List<AndonTerminalModel>();
 
-            foreach (var workcenter in currentOverview)
+            if (currentOverview == null) return View(currentOverviewModel);
             {
-                var statusDefinitions = _db.StatusDefinition.ToList();
-
-                var statusValues = _db.WorkcenterList
-                    .Where(w => w.WorkcenterID == workcenter.WorkcenterID)
-                    .Select(w => new List<string> { 
-                        statusDefinitions[0].StatusEnabled == true ? w.Status1 : "",
-                        statusDefinitions[1].StatusEnabled == true ? w.Status2 : "",
-                        statusDefinitions[2].StatusEnabled == true ? w.Status3 : "",
-                        statusDefinitions[3].StatusEnabled == true ? w.Status4 : "",
-                        statusDefinitions[4].StatusEnabled == true ? w.Status5 : "" })
-                    .FirstOrDefault();
-
-                // Create an instance of the custom model and populate it with the workcenter information and the status values
-                var workcenterModel = new AndonTerminalModel
+                foreach (var workcenter in currentOverview)
                 {
-                    WorkcenterID = workcenter.WorkcenterID,
-                    WorkcenterName = workcenter.WorkcenterName,
-                    StatusDefinitions = statusDefinitions,
-                    StatusValues = statusValues
-                };
-                currentOverviewModel.Add(workcenterModel);
+                    var statusDefinitions = _db.StatusDefinition.ToList();
+
+                    var statusValues = _db.WorkcenterList?.Where(w => w.WorkcenterID == workcenter.WorkcenterID)
+                        .Select(w => new List<string>
+                        {
+                            statusDefinitions[0].StatusEnabled == true ? w.Status1 : "",
+                            statusDefinitions[1].StatusEnabled == true ? w.Status2 : "",
+                            statusDefinitions[2].StatusEnabled == true ? w.Status3 : "",
+                            statusDefinitions[3].StatusEnabled == true ? w.Status4 : "",
+                            statusDefinitions[4].StatusEnabled == true ? w.Status5 : ""
+                        })
+                        .FirstOrDefault();
+
+                    // Create an instance of the custom model and populate it with the workcenter information and the status values
+                    if (statusValues != null)
+                    {
+                        var workcenterModel = new AndonTerminalModel
+                        {
+                            WorkcenterID = workcenter.WorkcenterID,
+                            WorkcenterName = workcenter.WorkcenterName,
+                            StatusDefinitions = statusDefinitions,
+                            StatusValues = statusValues
+                        };
+                        currentOverviewModel.Add(workcenterModel);
+                    }
+                }
             }
 
             return View(currentOverviewModel);
@@ -89,20 +97,22 @@ namespace eAndon_MVC.Controllers
             var workcenter = _db.WorkcenterList.FirstOrDefault(w => w.WorkcenterID == workcenterID);
 
             var statusProperty = typeof(Workcenter).GetProperties().ElementAt(statusIndex + 3); // +3 because Status1 to Status5 are properties 3 to 7
-            var currentStatus = (string)statusProperty.GetValue(workcenter);
-            var newStatus = currentStatus == "green" ? "red" : "green";
+            var currentStatus = (string)statusProperty.GetValue(workcenter)!;
+            var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
+            var newStatus = currentStatus.Split('|')[0] == "green" ? "red|" + now : "green|" + now;
             statusProperty.SetValue(workcenter, newStatus);
 
             var logEntry = new WorkcenterStatusLog
             {
                 WorkcenterID = workcenterID,
                 StatusIndex = statusIndex,
-                OldStatus = currentStatus,
-                NewStatus = newStatus,
+                OldStatus = currentStatus.Split('|')[0],
+                NewStatus = newStatus.Split('|')[0],
                 ChangeDateTime = DateTime.Now
             };
 
             _db.WorkcenterStatusLog.Add(logEntry);
+
             _db.SaveChanges();
 
             return Content(newStatus);

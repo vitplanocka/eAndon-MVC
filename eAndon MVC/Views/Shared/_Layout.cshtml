@@ -10,48 +10,38 @@
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Andon_MVC</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
-                    <ul class="navbar-nav flex-grow-1">
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-md-block sidebar">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Andon_MVC</a>
+            <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-column">
+                <div class="navbar-nav flex-column">
+                    <nav class="nav d-flex flex-column">
 
                         @{
                             var workcenterList = dbContext.WorkcenterList.OrderBy(w => w.WorkcenterRow).ToList();
                             foreach (var workcenter in workcenterList)
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="AndonTerminal" 
-                                       asp-route-workcenterID="@workcenter.WorkcenterID" 
-                                       asp-route-workcenterName="@workcenter.WorkcenterName">@workcenter.WorkcenterID</a>
-                                </li>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="AndonTerminal" 
+                                   asp-route-workcenterID="@workcenter.WorkcenterID" 
+                                   asp-route-workcenterName="@workcenter.WorkcenterName">@workcenter.WorkcenterID</a>
                             }
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Overview">Overview</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Settings">Settings</a>
-                        </li>
-                        <li class="nav-item">              
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Log">Log</a>
-                        </li>
-                    </ul>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Overview">Overview</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Log">Log</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Settings">Settings</a>
+                    </nav>
                 </div>
             </div>
         </nav>
 
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+        <main role="main" class="col-md-10 ml-sm-auto">
             @RenderBody()
         </main>
     </div>
+</div>
+
 
     <footer class="border-top footer text-muted">
         <div class="container">
