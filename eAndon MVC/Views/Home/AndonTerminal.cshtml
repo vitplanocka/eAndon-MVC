@@ -2,124 +2,538 @@
 
 @{
     ViewData["Title"] = "Andon Terminal";
-    var statusNames = Model.StatusDefinitions.Where(s => s.StatusEnabled).ToList(); 
+    var statusNames = Model.StatusDefinitions.Where(s => s.StatusEnabled).ToList();
+
+    // load settings
+    var showWorkcenterName = Model.Settings!.FirstOrDefault(s => s.SettingName == "Show workcenter name?");
+    var alarmDetailsEnabled = Model.StatusDefinitions.Select(s => s.StatusDetailsEnabled).ToList();
+    var alarmStartText1Structure = Model.StatusDefinitions.Select(s => s.AlarmStartText1Structure).ToList();
+    var alarmStartText2Structure = Model.StatusDefinitions.Select(s => s.AlarmStartText2Structure).ToList();
+    var alarmStartText3Structure = Model.StatusDefinitions.Select(s => s.AlarmStartText3Structure).ToList();
+    var language = Model.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = Model.Localizations!
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
 }
 
-
-
 <div class="text-center">
-    <h1>Andon Terminal for workcenter @Model.WorkcenterID - @Model.WorkcenterName</h1>
-    <table style="border: 1px solid black; font-family: Verdana; color: #444;">
+
+    <div style="margin-left: 50px; text-align: left;">
+        <span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "TerminalHeader")?.Text @Model.WorkcenterID - @Model.WorkcenterName</span>
+    </div>
+    <table class="alarm-table" style="border: 2px solid #1C2331; color: #444 !important; margin-top: 50px; margin-left: 50px;">
+
         <thead>
         <tr>
-            @foreach (var statusName in statusNames)
-            {
-                <th>@statusName.StatusName</th>
-            }
+            <td colspan="@(2 + statusNames.Count)" style="background-color: #f0f0f0; border: 2px solid darkgrey; font-weight: bold; text-align: left; text-transform: uppercase; padding: 5px;">
+                @translations.FirstOrDefault(t => t.Id == "TerminalInstruction1")?.Text <br />
+                @translations.FirstOrDefault(t => t.Id == "TerminalInstruction2")?.Text <br />
+                @translations.FirstOrDefault(t => t.Id == "TerminalInstruction3")?.Text
+            </td>
         </tr>
+        <tr>
+                <th></th>
+                @if (showWorkcenterName == null || showWorkcenterName.CurrentSetting == "Yes")
+                {
+                    <th></th>
+                }
+                @foreach (var statusName in statusNames)
+                {
+                    <th>@statusName.StatusName</th>
+                }
+            </tr>
+            <tr>
+                <th> @translations.FirstOrDefault(t => t.Id == "WorkcenterID")?.Text</th>
+
+                @if (showWorkcenterName == null || showWorkcenterName.CurrentSetting == "Yes")
+                {
+                    <th> @translations.FirstOrDefault(t => t.Id == "WorkcenterName")?.Text</th>
+                }
+
+                @foreach (var statusName in statusNames)
+                {
+                    <th><i class="@statusName.IconName fa-3x"></i></th>
+                }
+            </tr>
         </thead>
         <tbody>
-        <tr>
-            @for (var statusIndex = 0; statusIndex < Model.StatusValues!.Count(); statusIndex++)
-            {
-                var statusDefinition = Model.StatusDefinitions[statusIndex];
-                if (statusDefinition.StatusEnabled)
+            <tr>
+                <td onclick="openAlarmHistoryModal('@Model.WorkcenterID', '@Model.WorkcenterName')" style="cursor: pointer;"><i class="fa fa-history fa-lg">&nbsp;</i> @Model.WorkcenterID</td>
+                @if (showWorkcenterName == null || showWorkcenterName.CurrentSetting == "Yes")
                 {
-                    if (Model.StatusValues != null)
+                    <td onclick="openAlarmHistoryModal('@Model.WorkcenterID', '@Model.WorkcenterName')" style="cursor: pointer;"> @Model.WorkcenterName</td>
+                }
+
+                @for (var statusIndex = 0; statusIndex < Model.StatusValues!.Count(); statusIndex++)
+                {
+                    var statusDefinition = Model.StatusDefinitions[statusIndex];
+                    if (statusDefinition.StatusEnabled)
                     {
-                        var statusValue = Model.StatusValues[statusIndex];
+                        if (Model.StatusValues != null)
+                        {
+
+                            var statusValue = Model.StatusValues[statusIndex];
                             if (statusValue.Split("|")[0] == "green")
                             {
-                                @:
-                                <td id="status_@(statusIndex)" class="green-bg" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="cursor: pointer;">&nbsp;</td>
-                        }
-                        else {
-                            var statusDateTime = statusValue.Split('|');
-                            var statusSeconds = statusDateTime.Length > 1 ?
-                                Math.Round((DateTime.Now - DateTime.Parse(statusDateTime[1])).TotalSeconds) :
-                                0;
-                            @:
-                            <td id="status_@(statusIndex)" class="red-bg" data-statusDateTime="@statusValue.Split("|")[1]" onclick="updateStatus('@Model.WorkcenterID', @statusIndex)" style="cursor: pointer;">
-                                <span id="statusSeconds_@(statusIndex)" class="status-seconds">@(statusSeconds)s</span>
-                            </td>
+                                <td id="status_@(statusIndex)" class="green-bg alarm-td" onclick="updateStatus('@Model.WorkcenterID', '@Model.WorkcenterName', @statusIndex, '@Model.StatusDefinitions[statusIndex].StatusName')" style="cursor: pointer;">&nbsp;</td>
+                            }
+                            else
+                            {
+                                var statusDateTime = statusValue.Split('|');
+                                var statusSeconds = statusDateTime.Length > 1 ? Math.Round((DateTime.Now - DateTime.Parse(statusDateTime[1])).TotalSeconds) : 0;
+                                <td id="status_@(statusIndex)" class="red-bg alarm-td" data-statusDateTime="@statusValue.Split("|")[1]" onclick="updateStatus('@Model.WorkcenterID', '@Model.WorkcenterName', @statusIndex, '@Model.StatusDefinitions[0].StatusName')" style="cursor: pointer;">
+                                    <span id="statusSeconds_@(statusIndex)" class="status-seconds">
+                                        @switch (statusSeconds)
+                                        {
+                                            case >= 60 and < 3600:
+                                                // display time in minutes
+                                                @($"{Math.Floor(statusSeconds / 60)}m")
+                                                ;
+                                                break;
+                                            case >= 3600:
+                                                // display time in hours
+                                                @($"{Math.Floor(statusSeconds / 3600)}h")
+                                                ;
+                                                break;
+                                            default:
+                                                // display time in seconds
+                                                @($"{statusSeconds}s")
+                                                ;
+                                                break;
+                                        }
+                                    </span>
+                                </td>
+                            }
                         }
                     }
                 }
-            }
-        </tr>
+            </tr>
         </tbody>
     </table>
-</div>
-<script>
-    function updateStatus(workcenterID, statusIndex) {
-        const statusTD = document.getElementById(`status_${statusIndex}`);
 
-        fetch(`/Home/UpdateStatus?workcenterID=${workcenterID}&statusIndex=${statusIndex}`)
-            .then(response => response.text())
-            .then(newStatus => {
-                if (newStatus.split("|")[0] === "green") {
-                    statusTD.classList.remove("red-bg");
-                    statusTD.classList.add("green-bg");
-                    statusTD.textContent = "";
-                } else {
-                    statusTD.classList.remove("green-bg");
-                    statusTD.classList.add("red-bg");
-                    const statusDateTime = newStatus.split('|')[1];
-                    statusTD.setAttribute("data-statusDateTime", statusDateTime);
-                    const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
-                    statusTD.textContent = `${newStatusSeconds}s`;
-                    
-                    updateStatusSeconds(statusTD);
+    <!-- Start of alarm start details modal window -->
+    <div id="alarm-details-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>@translations.FirstOrDefault(t => t.Id == "AlarmStartDetails")?.Text</h3>
+            <div class="modal-body">
+                <div class="dropdowns-container">
+                <div class="form-group" id="dropdown1-container">
+                        <label for="dropdown1">@translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text:</label>
+                    <select id="dropdown1">
+                            <option value="-- N/A --">@translations.FirstOrDefault(t => t.Id == "SelectOption")?.Text</option>
+                    </select>
+                </div>
+                    <div class="form-group" id="dropdown2-container">
+                        <label for="dropdown2">@translations.FirstOrDefault(t => t.Id == "FailureType")?.Text:</label>
+                        <select id="dropdown2">
+                            <option value="-- N/A --">@translations.FirstOrDefault(t => t.Id == "SelectOption")?.Text</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="text-field-container">
+                    <label for="text-field">@translations.FirstOrDefault(t => t.Id == "DetailsOptional")?.Text:</label>
+                    <textarea id="text-field" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-button" class="btn btn-secondary">@translations.FirstOrDefault(t => t.Id == "Cancel")?.Text &times;</button>
+                <button id="confirm-alarm-button" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "ConfirmAlarm")?.Text</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal element displaying the alarm history -->
+    <div id="alarmHistoryModal" class="modal">
+        <div class="modal-content">
+            <button class="close">@translations.FirstOrDefault(t => t.Id == "Close")?.Text &times;</button>
+            <h2 id="alarmHistoryTitle" style="margin-top: 20px;">@translations.FirstOrDefault(t => t.Id == "AlarmHistory")?.Text</h2>
+            <div id="alarmHistoryContainer"
+                 data-headers="@translations.FirstOrDefault(t => t.Id == "AlarmName")?.Text, @translations.FirstOrDefault(t => t.Id == "AlarmStartTime")?.Text, @translations.FirstOrDefault(t => t.Id == "AlarmEndTime")?.Text, @translations.FirstOrDefault(t => t.Id == "DurationMin")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureType")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureDetails")?.Text">
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+
+    const alarmDetailsEnabled = @Json.Serialize(alarmDetailsEnabled);
+
+    async function updateStatus(workcenterID, workcenterName, statusIndex, statusName) {
+        const statusElement = document.getElementById(`status_${statusIndex}`);
+
+        if (statusElement.classList.contains('green-bg')) {
+            if (alarmDetailsEnabled[statusIndex] === 1 || alarmDetailsEnabled[statusIndex] === 3) {  // Details for alarm start activated
+                const result = await openAlarmStartDetailsModal(workcenterID, workcenterName, statusIndex, statusName, '@Json.Serialize(alarmStartText1Structure)', '@Json.Serialize(alarmStartText2Structure)', '@Json.Serialize(alarmStartText3Structure)');
+                if (result === 'cancel') {
+                    return;
                 }
-            });
+            } 
+            await setStatusRed(workcenterID, workcenterName, statusIndex, statusName);
+        } else {
+            await setStatusGreen(workcenterID, workcenterName, statusIndex, statusName);
+        }
     }
 
-    function updateStatusSeconds(statusTD) {
-        const statusSecondsSpan = statusTD.querySelector(".status-seconds");
-        const statusDateTime = statusTD.getAttribute("data-statusDateTime");
-        
-        setInterval(() => {
-            const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
-            statusSecondsSpan.textContent = `${newStatusSeconds}s`;
-        }, 1000);
+
+    function configureDropdown(container, dropdown, structure) {
+        const parts = structure.split('|');
+        const visibility = parts[0];
+        const options = parts.slice(1);
+
+        if (visibility === "ON") {
+            container.style.display = 'block';
+
+            // Remove all options except the first default option
+            for (let i = dropdown.options.length - 1; i >= 1; i--) {
+                dropdown.remove(i);
+            }
+
+            // Append new options after the default option
+            options.forEach(option => {
+                const opt = document.createElement("option");
+                opt.value = option;
+                opt.text = option;
+                dropdown.add(opt);
+            });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+
+    function openAlarmStartDetailsModal(workcenterID, workcenterName, statusIndex, statusName, alarmStartText1StructureJson, alarmStartText2StructureJson, alarmStartText3StructureJson) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('alarm-details-modal');
+            const alarmStartText1Structure = JSON.parse(alarmStartText1StructureJson);
+            const alarmStartText2Structure = JSON.parse(alarmStartText2StructureJson);
+            const alarmStartText3Structure = JSON.parse(alarmStartText3StructureJson);
+            modal.style.display = 'flex';
+
+            // reset the values inside the modal
+            const dropdown1 = document.getElementById('dropdown1');
+            const dropdown2 = document.getElementById('dropdown2');
+            const textField = document.getElementById('text-field');
+            dropdown1.selectedIndex = 0;
+            dropdown2.selectedIndex = 0;
+            textField.value = '';
+
+            const dropdown1Container = document.getElementById('dropdown1-container');
+            const dropdown2Container = document.getElementById('dropdown2-container');
+            const textFieldContainer = document.getElementById('text-field-container');
+
+            configureDropdown(dropdown1Container, document.getElementById('dropdown1'), alarmStartText1Structure[statusIndex]);
+            configureDropdown(dropdown2Container, document.getElementById('dropdown2'), alarmStartText2Structure[statusIndex]);
+
+            if (alarmStartText3Structure[statusIndex].split('|')[0] === "ON") {
+                textFieldContainer.style.display = 'block';
+            } else {
+                textFieldContainer.style.display = 'none';
+            }
+
+            const confirmAlarmButton = document.getElementById('confirm-alarm-button');
+            confirmAlarmButton.addEventListener('click', async function () {
+                modal.style.display = 'none';
+                resolve('submit');
+            });
+
+            const cancelButton = document.getElementById('cancel-button');
+            cancelButton.addEventListener('click', function () {
+                modal.style.display = 'none';
+                resolve('cancel');
+            });
+        });
+    }
+
+
+    async function setStatusRed(workcenterID, workcenterName, statusIndex, statusName) {
+        const formData = new FormData();
+        formData.append('workcenterID', workcenterID);
+        formData.append('workcenterName', workcenterName);
+        formData.append('statusIndex', statusIndex);
+        formData.append('alarmName', statusName);
+        const dropdown1 = document.getElementById('dropdown1').value;
+        const dropdown2 = document.getElementById('dropdown2').value;
+        const textField = document.getElementById('text-field').value;
+
+        const additionalData = {
+            dropdown1: dropdown1,
+            dropdown2: dropdown2,
+            textField: textField
+        };
+        formData.append('additionalDataJson', JSON.stringify(additionalData));
+
+        try {
+            const response = await fetch('/Home/SetRed', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const statusElement = document.getElementById(`status_${statusIndex}`);
+                statusElement.classList.remove('green-bg');
+                statusElement.classList.add('red-bg');
+                statusElement.dataset.statusDateTime = new Date().toISOString();
+
+                const statusDateTime = statusElement.dataset.statusDateTime;
+                statusElement.textContent = `0s`;
+
+                let intervalId = statusElement.getAttribute("data-interval-id");
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    statusElement.removeAttribute("data-interval-id");
+                }
+
+                intervalId = setInterval(() => {
+                    let newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+
+                    if (newStatusSeconds >= 60 && newStatusSeconds < 3600) {
+                        newStatusSeconds = Math.floor(newStatusSeconds / 60);
+                        statusElement.textContent = `${newStatusSeconds}m`;
+                    } else if (newStatusSeconds >= 3600) {
+                        newStatusSeconds = Math.floor(newStatusSeconds / 3600);
+                        statusElement.textContent = `${newStatusSeconds}h`;
+                    } else {
+                        statusElement.textContent = `${newStatusSeconds}s`;
+                    }
+                }, 1000);
+
+                statusElement.setAttribute("data-interval-id", intervalId);
+            } else {
+                console.error('Error setting status to red:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Error setting status to red:', error);
+        }
+    }
+
+    async function setStatusGreen(workcenterID, workcenterName, statusIndex, statusName) {
+        const formData = new FormData();
+        formData.append('workcenterID', workcenterID);
+        formData.append('workcenterName', workcenterName);
+        formData.append('statusIndex', statusIndex);
+        formData.append('alarmName', statusName);
+
+        try {
+            const response = await fetch('/Home/SetGreen', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const statusElement = document.getElementById(`status_${statusIndex}`);
+                statusElement.classList.remove('red-bg');
+                statusElement.classList.add('green-bg');
+                statusElement.dataset.statusDateTime = '';
+
+                // Clear the interval if it exists and remove the "data-interval-id" attribute
+                const intervalId = statusElement.getAttribute("data-interval-id");
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    statusElement.removeAttribute("data-interval-id");
+                }
+
+                // Set the text content to an empty string
+                statusElement.textContent = "";
+            } else {
+                console.error('Error setting status to green:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Error setting status to green:', error);
+        }
+    }
+
+    // Alarm history modal
+    const modal = document.getElementById("alarmHistoryModal");
+    const closeButton = document.querySelector(".close");
+    const alarmHistoryContainer = document.getElementById('alarmHistoryContainer');
+    const headers = alarmHistoryContainer.getAttribute('data-headers').split(',');
+
+    closeButton.onclick = function () {
+        modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+
+    async function openAlarmHistoryModal(workcenterID, workcenterName) {
+        try {
+            const response = await fetch(`/Home/GetAlarmHistoryModal?workcenterID=${workcenterID}`);
+
+            if (response.ok) {
+                const alarmHistory = await response.json();
+
+                const alarmHistoryContainer = document.getElementById('alarmHistoryContainer');
+                alarmHistoryContainer.innerHTML = '';
+
+                const alarmHistoryTitle = document.getElementById('alarmHistoryTitle');
+                alarmHistoryTitle.textContent += `${workcenterID} ${workcenterName}`;
+
+                const table = document.createElement('table');
+                table.classList.add('alarm-history-table');
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                alarmHistory.forEach(alarm => {
+                    const row = document.createElement('tr');
+                    const startTime = new Date(alarm.alarmStartTime).toLocaleString('sv-SE');
+                    const endTime = alarm.alarmEndTime === '0001-01-01T00:00:00'
+                        ? 'N/A'
+                        : new Date(alarm.alarmEndTime).toLocaleString('sv-SE');
+
+                    const durationParts = alarm.duration.match(/(\d+):(\d+):(\d+).(\d+)/);
+                    const durationHours = parseInt(durationParts[1]);
+                    const durationMinutes = parseInt(durationParts[2]);
+                    const durationSeconds = parseInt(durationParts[3]);
+                    const totalDurationInMinutes = durationHours * 60 + durationMinutes + durationSeconds / 60;
+                    const formattedDuration = totalDurationInMinutes.toFixed(1);
+
+                    [alarm.alarmName, startTime, endTime, formattedDuration, alarm.alarmStartText1, alarm.alarmStartText2, alarm.alarmStartText3].forEach(cellValue => {
+                        const td = document.createElement('td');
+                        td.textContent = cellValue;
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
+                alarmHistoryContainer.appendChild(table);
+
+                modal.style.display = 'block';
+            } else {
+                console.error('Failed to fetch alarm history:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching alarm history:', error);
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        // for any cells that have already alarm switched on during page load, activate incrementing time
         const redBgCells = document.querySelectorAll(".red-bg");
         redBgCells.forEach(cell => {
-            updateStatusSeconds(cell);
+            const statusSecondsSpan = cell.querySelector(".status-seconds");
+            const statusDateTime = cell.getAttribute("data-statusDateTime");
+
+            setInterval(() => {
+                const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+
+                let formattedTime;
+                if (newStatusSeconds < 60) {
+                    formattedTime = `${newStatusSeconds}s`;
+                } else if (newStatusSeconds >= 60 && newStatusSeconds < 3600) {
+                    const minutes = Math.floor(newStatusSeconds / 60);
+                    formattedTime = `${minutes}m`;
+                } else {
+                    const hours = Math.floor(newStatusSeconds / 3600);
+                    formattedTime = `${hours}h`;
+                }
+
+                statusSecondsSpan.textContent = formattedTime;
+            }, 1000);
         });
     });
 </script>
 
-
 <style>
-    table {
-        border-collapse: separate;
-        border-spacing: 5px;
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: #000000 !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
     }
 
-    td {
-        width: 100px;
-        padding: 10px; /* add margin inside the td */
-        border-radius: 10px; /* add rounded corners */
+    .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60%;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px #000000, 0 1px 3px #000000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
-    .green-bg, .red-bg {
-        height: 50px;
-    }
-
-    .green-bg {
-        background-color: green;
-        cursor: pointer;
-        border: 7px solid darkgreen; /* add outline with darker color */
-    }
-
-    .red-bg {
-        background-color: red;
-        color: white;
+    .close {
         font-weight: bold;
         cursor: pointer;
-        border: 7px solid darkred; /* add outline with darker color */
+        position: absolute;
+        top: 10px;
+        right: 20px;
     }
+
+        .close:hover,
+        .close:focus {
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .alarm-history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .alarm-history-table th {
+            background-color: #D6EFFF !important;
+            color: #1C2331 !important;
+            border: 1px solid #1C2331 !important;
+            font-weight: bold;
+            text-align: center; /* Add this line to center the header text */
+        }
+
+        .alarm-history-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .alarm-history-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+    .modal-overlay {
+        background-color: #f0f0f0;
+        background-color: rgba(240, 240, 240, 0.9); /* very light grey with transparency */
+    }
+
+    .dropdowns-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #text-field-container {
+        width: 70%;
+    }
+
+    #text-field {
+        width: 100%;
+        resize: vertical; /* allow vertical resizing */
+    }
+
+
 </style>
+

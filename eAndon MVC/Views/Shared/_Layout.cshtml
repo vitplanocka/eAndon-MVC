@@ -1,56 +1,236 @@
 ﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
 @inject MyDbContext dbContext
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Andon_MVC</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>eAndon MVC</title>
+    
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
-</head>
-<body>
-
-<div class="container-fluid">
-    <div class="row">
-        <nav class="col-md-2 d-md-block sidebar">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Andon_MVC</a>
-            <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-column">
-                <div class="navbar-nav flex-column">
-                    <nav class="nav d-flex flex-column">
-
-                        @{
-                            var workcenterList = dbContext.WorkcenterList.OrderBy(w => w.WorkcenterRow).ToList();
-                            foreach (var workcenter in workcenterList)
-                            {
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="AndonTerminal" 
-                                   asp-route-workcenterID="@workcenter.WorkcenterID" 
-                                   asp-route-workcenterName="@workcenter.WorkcenterName">@workcenter.WorkcenterID</a>
-                            }
-                        }
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Overview">Overview</a>
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Log">Log</a>
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Settings">Settings</a>
-                    </nav>
-                </div>
-            </div>
-        </nav>
-
-        <main role="main" class="col-md-10 ml-sm-auto">
-            @RenderBody()
-        </main>
-    </div>
-</div>
-
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2023 - Andon_MVC
-        </div>
-    </footer>
+    <link rel="stylesheet" href="~/css/layout.css" />
+    <link src="~/lib/FontAwesome.4.7.0/Content/Content/font-awesome.css" />
+  
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @RenderSection("Scripts", required: false)
+    <script src="~/lib/chart.js/chart.js"></script>
+
+</head>
+
+@{
+    var language = dbContext.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = dbContext.Localization
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
+}
+
+<body>
+<div class="wrapper d-flex align-items-stretch">
+    <div id="sidebar">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"><span class="pageTitle">eAndon MVC</span></a>
+        <hr class="m-0" />
+
+        <div id="sidenavAccordion">
+
+
+            @{
+                var workcenterList = dbContext.WorkcenterList.OrderBy(w => w.WorkcenterRow).ToList();
+                foreach (var workcenter in workcenterList)
+                {
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="AndonTerminal"
+                        asp-route-workcenterID="@workcenter.WorkcenterID"
+                        asp-route-workcenterName="@workcenter.WorkcenterName">
+                        <i class="fa fa-asterisk fa-lg" aria-hidden="true"></i>
+                        <b> &nbsp;@workcenter.WorkcenterID @workcenter.WorkcenterName</b>
+                    </a>
+                }
+            }
+            <hr class="m-0" />
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Overview"><i class="fa fa-television fa-lg" aria-hidden="true"></i>
+                    <b>&nbsp;@translations.FirstOrDefault(t => t.Id == "AlarmOverview")?.Text</b>
+                </a>
+            <hr class="m-0" />
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Log">
+                <i class="fa fa-file-text fa-lg" aria-hidden="true"></i>
+                    <b>&nbsp;@translations.FirstOrDefault(t => t.Id == "AlarmLog")?.Text</b>
+            </a>
+            <hr class="m-0" />
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Statistics">
+                    <i class="fa fa-bar-chart fa-lg" aria-hidden="true"></i>
+                    <b>&nbsp;@translations.FirstOrDefault(t => t.Id == "AlarmStatistics")?.Text</b>
+            </a>
+            <hr class="m-0" />
+                <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Settings">
+                    <i class="fa fa-cog fa-lg" aria-hidden="true"></i>
+                    <b>&nbsp;@translations.FirstOrDefault(t => t.Id == "Settings")?.Text</b>
+                </a>
+            <hr class="m-0" />
+            
+            <!-- Add language dropdown to the bottom of the navbar -->
+            <div class="center-navbar-dropdown">
+                <form id="language-form">
+                    <input type="hidden" name="settingID" value="@dbContext.Settings.FirstOrDefault(s => s.SettingName == "Language")!.SettingID" />
+                    <select id="language-select" name="settingValue" class="form-select">
+                        <option value="English" selected="@(language == "English")">English</option>
+                        <option value="Translation" selected="@(language != "English")">Translation</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+        <div class="renderbody">
+            @RenderBody()
+        </div>
+        <div class="footer py-3 bg-light mt-auto">
+            <div class="container-fluid">
+                <footer class="border-top footer text-muted">
+                    <div class="container">
+                            &copy; 2023 - eAndon MVC <a href="mailto:planocka@gmail.com">Vit Planocka</a>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+@RenderSection("scripts", required: false)
+<script>
+
+    document.getElementById('language-select').addEventListener('change', function (event) {
+        event.preventDefault();
+        const form = document.getElementById('language-form');
+        const formData = new FormData(form);
+        fetch('@Url.Action("UpdateSetting", "Settings")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to update the language setting');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+
+    function GetAntiXsrfRequestToken() {
+        const token = document.getElementsByName('__RequestVerificationToken')[0].value;
+        return token;
+    }
+
+    elem = $(".renderbody")[0];
+    let resizeObserver = new ResizeObserver(() => {
+        var windowHeight = parseInt($(window).height().toFixed());
+        var oldHeight = parseInt($('#sidenavAccordion').height().toFixed());
+        var newHeight = parseInt($('.renderbody').height().toFixed()) + parseInt($('.footer').height().toFixed());
+        newHeight = newHeight <= windowHeight ? windowHeight : newHeight;
+        if (oldHeight !== newHeight - 60)
+            $('#sidenavAccordion').height(newHeight);
+    });
+    resizeObserver.observe(elem);
+
+</script>
 </body>
 </html>
+
+<style>
+    .alarm-table {
+        border-collapse: separate;
+        border-spacing: 5px;
+    }
+
+    .alarm-td {
+        width: 100px;
+        padding: 10px; /* add margin inside the td */
+        border-radius: 10px; /* add rounded corners */
+    }
+
+    .green-bg, .red-bg {
+        height: 62px;
+    }
+
+    .green-bg {
+        background-color: green;
+        cursor: pointer;
+        border: 7px solid darkgreen; /* add outline with darker color */
+    }
+
+    .red-bg {
+        background-color: red;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        border: 7px solid darkred; /* add outline with darker color */
+    }
+
+    .workcenter {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .workcenter-row {
+        text-align: center;
+    }
+
+    th[colspan="3"] {
+        text-align: center;
+    }
+
+    hr.m-0 {
+        border-top: 1px solid #1C2331;
+    }
+
+    .nav-link {
+        color: #1C2331 !important;
+    }
+
+    #sidebar .navbar-brand h2 {
+        color: #1C2331;
+    }
+
+    .nav-link:hover {
+        color: #D6EFFF !important;
+        background-color: #1C2331 !important;
+    }
+
+    #sidebar {
+        background-color: #d3eaf2;
+    }
+
+    .pageTitle {
+        color: #1C2331 !important;
+        font-size: 2rem;
+        margin-top: 30px;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+
+    h2 {
+        display: block;
+        width: 100%;
+        background-color: #1C2331;
+        color: #D6EFFF;
+        font-weight: bold;
+        padding: 5px;
+        margin-top: 50px;
+        margin-bottom: 5px;
+        font-size: 1rem;
+    }
+
+    .center-navbar-dropdown {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+</style>

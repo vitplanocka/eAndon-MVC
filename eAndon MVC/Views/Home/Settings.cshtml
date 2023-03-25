@@ -1,173 +1,1272 @@
 ﻿@model List<StatusDefinition>
+@inject MyDbContext dbContext
+
+@{
+    var language = dbContext.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = dbContext.Localization!
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
+}
 
 <!DOCTYPE html>
 <html>
 <head>
+
     <meta charset="UTF-8">
     <title>Settings</title>
-    
-    <style>
-        .workcenter {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .workcenter-row {
-            text-align: center;
-        }
-    </style>
+
 </head>
 
 
 
 <body>
-<div class="container">
-    <h1>Settings</h1>
+    <div class="container">
+        <span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "Settings")?.Text</span>
+        <br />
+        <h2>&nbsp;&nbsp;@translations.FirstOrDefault(t => t.Id == "WORKCENTERS")?.Text</h2>
 
-    <h2>Workcenters</h2>
-    
-    <table class="table">
-    <thead>
-        <tr>
-            <th>Workcenter Row</th>
-            <th>Workcenter ID (unique)</th>
-            <th>Workcenter Name</th>
-            <th></th>
-        </tr>
-    </thead>
+        <table class="table" style="border: 2px solid #1C2331; border-collapse: collapse;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr>
+                    <th colspan="3" style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "WorkcenterRow")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "WorkcenterIDUnique")?.Text</th>
+                    <th colspan="3" text-align: center;>@translations.FirstOrDefault(t => t.Id == "WorkcenterName")?.Text</th>
+                    <th></th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var workcenter in ViewBag.Workcenters)
                 {
-                    <tr>
-                        <td class="workcenter">
+                    <tr style="border: 1px solid #1C2331;">
+                        <td>
                             @if (ViewBag.Workcenters.IndexOf(workcenter) > 0)
                             {
                                 <form method="post" asp-controller="Settings" asp-action="MoveWorkcenterUp">
                                     <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
-                                    <button type="submit" class="btn btn-primary"><b>↑</b></button>
-                                </form>
-                            }
-                            &nbsp;&nbsp;
-                            <span class="workcenter-row">@workcenter.WorkcenterRow</span>
-                            &nbsp;&nbsp;
-                            @if (ViewBag.Workcenters.IndexOf(workcenter) < ViewBag.Workcenters.Count - 1)
-                            {
-                                <form method="post" asp-controller="Settings" asp-action="MoveWorkcenterDown">
-                                    <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
-                                    <button type="submit" class="btn btn-primary"><b>↓</b></button>
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-chevron-up"></i></button>
                                 </form>
                             }
                         </td>
                         <td>
+                            &nbsp;&nbsp;
+                            <span class="workcenter-row">@workcenter.WorkcenterRow</span>
+                            &nbsp;&nbsp;
+                        </td>
+                        <td>
+                            @if (ViewBag.Workcenters.IndexOf(workcenter) < ViewBag.Workcenters.Count - 1)
+                            {
+                                <form method="post" asp-controller="Settings" asp-action="MoveWorkcenterDown">
+                                    <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-chevron-down"></i></button>
+                                </form>
+                            }
+                        </td>
+                        <td style="border: 1px solid #1C2331;">
                             <form method="post" asp-controller="Settings" asp-action="UpdateWorkcenterID">
                                 <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
                                 <input type="text" name="workcenterID" value="@workcenter.WorkcenterID" />
-                                <button type="submit" class="btn btn-primary">Save ID</button>
+                                <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "SaveID")?.Text</button>
                             </form>
                         </td>
                         <td>
                             <form method="post" asp-controller="Settings" asp-action="UpdateWorkcenterName">
                                 <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
                                 <input type="text" name="workcenterName" value="@workcenter.WorkcenterName" />
-                                <button type="submit" class="btn btn-primary">Save Name</button>
+                                <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "SaveName")?.Text</button>
                             </form>
                         </td>
                         <td>
                             <form method="post" asp-controller="Settings" asp-action="DeleteWorkcenter">
                                 <input type="hidden" name="workcenterRow" value="@workcenter.WorkcenterRow" />
-                                <button type="submit" class="btn btn-primary">Delete workcenter</button>
+                                <button type="submit" class="btn btn-secondary">@translations.FirstOrDefault(t => t.Id == "DeleteWorkcenter")?.Text</button>
                             </form>
                         </td>
                     </tr>
                 }
-            <tr>
-                <form method="post" asp-controller="Settings" asp-action="AddWorkcenter">
-                    <td class="workcenter">
+                <tr>
+                    <form method="post" asp-controller="Settings" asp-action="AddWorkcenter">
+                    <td></td>
+                    <td>
+                        &nbsp;&nbsp;
                         <span class="workcenter-row">@(ViewBag.Workcenters.Count + 1)</span>
+                        &nbsp;&nbsp;
+                    </td>
+                    <td></td>
+                    <td style="border: 1px solid #1C2331;">
+                        <input type="text" name="newWorkcenterID" placeholder="@translations.FirstOrDefault(t => t.Id == "WorkcenterIDUnique")?.Text" />
                     </td>
                     <td>
-                        <input type="text" name="newWorkcenterID" placeholder="Workcenter ID (unique)" />
+                        <input type="text" name="newWorkcenterName" placeholder="@translations.FirstOrDefault(t => t.Id == "WorkcenterName")?.Text" />
                     </td>
                     <td>
-                        <input type="text" name="newWorkcenterName" placeholder="Workcenter Name" />
-                    </td>
-                    <td>
-                        <button type="submit" class="btn btn-primary">Add workcenter</button>
+                        <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "AddWorkcenter")?.Text</button>
                     </td>
                     <input type="hidden" name="workcenterRow" value="@(ViewBag.Workcenters.Count + 1)" />
-                </form>
-            </tr>
+                    </form>
+                </tr>
 
 
             </tbody>
-    </table>
-    
+        </table>
 
-    <h2>Alarm types</h2>
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Alarm row</th>
-            <th>Alarm type name</th>
-            <th>Alarm type enabled</th>
-            <th>Alarm details enabled</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var status in Model)
-        {
-            <tr>
-                <td class="workcenter">
-                @if (Model.IndexOf(status) > 0)
+
+        <h2>&nbsp;&nbsp;@translations.FirstOrDefault(t => t.Id == "ALARMTYPES")?.Text</h2>
+        <table class="table" style="border: 2px solid #1C2331;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr>
+                    <th colspan="3" style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmRow")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmTypeName")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmTypeIcon")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmTypeEnabled")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmDetailsEnabled")?.Text</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var status in Model)
                 {
-                    <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeUp">
-                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                        <button type="submit" class="btn btn-primary"><b>↑</b></button>
-                    </form>
+                    <tr style="border: 1px solid #1C2331;">
+                        <td>
+                            @if (Model.IndexOf(status) > 0)
+                            {
+                                <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeUp">
+                                    <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-chevron-up"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                        <td>
+                            &nbsp;&nbsp;
+                            <span class="workcenter-row">@status.StatusRow</span>
+                            &nbsp;&nbsp;
+                        </td>
+                        <td>
+                            @if (Model.IndexOf(status) < Model.Count - 1)
+                            {
+                                <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeDown">
+                                    <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-chevron-down"></i></button>
+                                </form>
+                            }
+                        </td>
+
+                        <td style="border: 1px solid #1C2331;">
+                            <form method="post" asp-controller="Settings" asp-action="UpdateAlarmTypeName">
+                                <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                <input type="text" name="statusName" value="@status.StatusName" />
+                                <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "SaveName")?.Text</button>
+                            </form>
+                        </td>
+
+                        <td style="border: 1px solid #1C2331;">
+                            <div class="row">
+                                <div class="col-3">
+                                    <i class="@status.IconName fa-2x"></i>
+                                </div>
+                                <div class="col-9">
+                                    <form method="post" asp-controller="Settings" asp-action="UpdateAlarmTypeIcon" id="iconForm_@Model.IndexOf(status)">
+                                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                        <input type="hidden" name="iconName" id="iconName_@Model.IndexOf(status)" value="@status.IconName" />
+                                        <button type="button" class="btn btn-primary" id="iconBtn_@Model.IndexOf(status)" data-index="@Model.IndexOf(status)" data-toggle="modal" data-target="#iconModal">@translations.FirstOrDefault(t => t.Id == "ChooseIcon")?.Text</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td style="border: 1px solid #1C2331;">
+                            <form method="post" asp-controller="Settings" asp-action="UpdateStatusEnabled">
+                                <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                <select name="statusEnabled" onchange="this.form.submit()">
+                                    <option value="True" selected="@status.StatusEnabled">@translations.FirstOrDefault(t => t.Id == "Yes")?.Text</option>
+                                    <option value="False" selected="@(status.StatusEnabled == false)">@translations.FirstOrDefault(t => t.Id == "No")?.Text</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td style="border: 1px solid #1C2331;">
+                            <div style="display: flex; align-items: center;">
+                                <form method="post" asp-controller="Settings" asp-action="UpdateAlarmDetailsEnabled">
+                                    <input type="hidden" name="statusRow" value="@status.StatusRow" />
+                                    <select name="statusDetailsEnabled" onchange="this.form.submit()">
+                                        <option value="0" selected="@(status.StatusDetailsEnabled == 0)">@translations.FirstOrDefault(t => t.Id == "NoDetailsEnabled")?.Text</option>
+                                        <option value="1" selected="@(status.StatusDetailsEnabled == 1)">@translations.FirstOrDefault(t => t.Id == "EnabledForStart")?.Text</option>
+                                        <!-- option value="2" selected="@(status.StatusDetailsEnabled == 2)">@translations.FirstOrDefault(t => t.Id == "EnabledForEnd")?.Text</!-->
+                                        <!-- option value="3" selected="@(status.StatusDetailsEnabled == 3)">@translations.FirstOrDefault(t => t.Id == "EnabledForStartEnd")?.Text</!-->
+                                    </select>
+                                </form>
+                                @if (status.StatusDetailsEnabled is 1 or 3)
+                                {
+                                    <i class="fa fa-play" style="margin-left: 10px; cursor: pointer;" data-toggle="tooltip" title="Define alarm start details" data-row="@status.StatusRow" onclick="showDefineAlarmStartDetailsModal(@Model.IndexOf(status), '@status.StatusName', '@ViewBag.StatusList[Model.IndexOf(status)].AlarmStartText1Structure', '@ViewBag.StatusList[Model.IndexOf(status)].AlarmStartText2Structure', '@ViewBag.StatusList[Model.IndexOf(status)].AlarmStartText3Structure')"></i>
+                                }
+                            </div>
+                        </td>
+                    </tr>
                 }
-                &nbsp;&nbsp;
-                <span class="workcenter-row">@status.StatusRow</span>
-                &nbsp;&nbsp;
-                @if (Model.IndexOf(status) < Model.Count - 1)
+            </tbody>
+        </table>
+
+        <!-- modal to enter alarm detail configuration -->
+        <div class="modal fade" id="defineAlarmStartDetailsModal" tabindex="-1" role="dialog" aria-labelledby="defineAlarmStartDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="hidden" id="alarmIndex"></span>
+                        <h5 class="modal-title" id="defineAlarmStartDetailsModalLabel">@translations.FirstOrDefault(t => t.Id == "DefineAlarmStartDetails")?.Text<span id="alarmName"></span></h5>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table modal-table" style="border: 2px solid #1C2331;">
+                            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                                <tr>
+                                    <th style="border: 1px solid #1C2331; text-align: center; width: 20%;">@translations.FirstOrDefault(t => t.Id == "TypeOfDetail")?.Text</th>
+                                    <th style="border: 1px solid #1C2331; text-align: center; width: 20%;">@translations.FirstOrDefault(t => t.Id == "DetailEnabled")?.Text</th>
+                                    <th style="border: 1px solid #1C2331; text-align: center; width: 20%;">@translations.FirstOrDefault(t => t.Id == "OptionsSeparated")?.Text</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid #1C2331;">@translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text</td>
+                                    <td style="border: 1px solid #1C2331;">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="failureLocationEnabled">
+                                            <label class="form-check-label" for="failureLocationEnabled">@translations.FirstOrDefault(t => t.Id == "Enabled")?.Text</label>
+                                        </div>
+                                    </td>
+                                    <td style="border: 1px solid #1C2331;">
+                                        <textarea class="form-control" id="failureLocationOptions" rows="3"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #1C2331;">@translations.FirstOrDefault(t => t.Id == "FailureType")?.Text</td>
+                                    <td style="border: 1px solid #1C2331;">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="failureTypeEnabled">
+                                            <label class="form-check-label" for="failureTypeEnabled">@translations.FirstOrDefault(t => t.Id == "Enabled")?.Text</label>
+                                        </div>
+                                    </td>
+                                    <td style="border: 1px solid #1C2331;">
+                                        <textarea class="form-control" id="failureTypeOptions" rows="3"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #1C2331;">@translations.FirstOrDefault(t => t.Id == "DetailsFree")?.Text</td>
+                                    <td style="border: 1px solid #1C2331;">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="detailsTextFieldEnabled">
+                                            <label class="form-check-label" for="detailsTextFieldEnabled">@translations.FirstOrDefault(t => t.Id == "Enabled")?.Text</label>
+                                        </div>
+                                    </td>
+                                    <td style="border: 1px solid #1C2331;">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="hideDefineAlarmStartDetailsModal();" data-dismiss="modal">@translations.FirstOrDefault(t => t.Id == "Cancel")?.Text</button>
+                        <button type="button" class="btn btn-primary" onclick="saveAndClose()">@translations.FirstOrDefault(t => t.Id == "SaveAndClose")?.Text</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        
+         <p></p>
+        <h2>&nbsp;&nbsp;@translations.FirstOrDefault(t => t.Id == "INTERFACESETTINGS")?.Text</h2>
+
+        <table class="table" style="border: 2px solid #1C2331;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr>
+                    <th style="border: 1px solid #1C2331; text-align: center;">
+                        <span style="float: left;">@translations.FirstOrDefault(t => t.Id == "SettingName")?.Text</span>
+                        <form method="post" asp-controller="Settings" asp-action="ResetInterfaceSettings">
+                            <button type="submit" class="btn btn-secondary" style="display: block; float: right;">
+                                <i class="fa fa-undo"></i> @translations.FirstOrDefault(t => t.Id == "ResetToDefaultSettings")?.Text
+                            </button>
+                        </form>
+                    </th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "CurrentValue")?.Text</th>
+                </tr>
+            </thead>
+            <tbody>
+
+
+                @foreach (var setting in ViewBag.SettingsList)
                 {
-                    <form method="post" asp-controller="Settings" asp-action="MoveAlarmTypeDown">
-                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                        <button type="submit" class="btn btn-primary"><b>↓</b></button>
-                    </form>
+                    <tr>
+                        <td style="border: 1px solid #1C2331;">
+                            <span>@setting.SettingName</span>
+                        </td>
+                        <td style="border: 1px solid #1C2331;">
+                            <form method="post" action="@Url.Action("UpdateSetting", "Settings")">
+                                <input type="hidden" name="settingID" value="@setting.SettingID" />
+                                <select name="settingValue" onchange="this.form.submit()">
+                                    @foreach (var value in setting.PossibleSettings.Split('|'))
+                                    {
+                                        <option value="@value" selected="@(value == setting.CurrentSetting)">@(value)</option>
+                                    }
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
                 }
-                </td>
 
-                <td>
-                    <form method="post" asp-controller="Settings" asp-action="UpdateAlarmTypeName">
-                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                        <input type="text" name="statusName" value="@status.StatusName" />
-                        <button type="submit" class="btn btn-primary">Save Name</button>
-                    </form>
-                </td>
+            </tbody>
+        </table>
 
-                <td>
-                    <form method="post" asp-controller="Settings" asp-action="UpdateStatusEnabled">
-                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                        <select name="statusEnabled" onchange="this.form.submit()">
-                            <option value="True" selected="@status.StatusEnabled">Yes</option>
-                            <option value="False" selected="@(status.StatusEnabled == false)">No</option>
-                        </select>
-                    </form>
-                </td>
-                <td>
-                    <form method="post" asp-controller="Settings" asp-action="UpdateAlarmDetailsEnabled">
-                        <input type="hidden" name="statusRow" value="@status.StatusRow" />
-                        <select name="statusDetailsEnabled" onchange="this.form.submit()">
-                                    <option value="1" selected="@(status.StatusDetailsEnabled == 1)">Details enabled</option>
-                                    <option value="0" selected="@(status.StatusDetailsEnabled == 0)">No details</option>
-                        </select>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+
+
+        <p></p>
+        <h2>&nbsp;&nbsp;@translations.FirstOrDefault(t => t.Id == "LOCALIZATION")?.Text</h2>
+
+        <table class="table" style="border: 2px solid #1C2331;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "DefaultText")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "LocalizedText")?.Text</th>
+                </tr>
+            </thead>
+            <tbody>
+
+
+                @foreach (var localization in ViewBag.Localization)
+                {
+                    <tr>
+                        <td style="border: 1px solid #1C2331;">
+                            <span>@localization.English</span>
+                        </td>
+                        <td style="border: 1px solid #1C2331;">
+                            <form method="post" asp-controller="Settings" asp-action="UpdateTranslation">
+                                <input type="hidden" name="localizationId" value="@localization.Id" />
+                                <input type="text" name="localizedText" value="@localization.Translation" style="width: 500px;" />
+                                <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "SaveText")?.Text</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+
+
+    </div>
+
+    <!-- Modal for choosing icon -->
+    <div class="modal fade" id="iconModal" tabindex="-1" role="dialog" aria-labelledby="iconModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="iconModalLabel">@translations.FirstOrDefault(t => t.Id == "ChooseIcon")?.Text</h5>
+                    <button type="button" class="btn btn-dark close" data-dismiss="modal" aria-label="Close" id="closeModalBtn">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-inline">
+                        <li class="list-inline-item" data-icon="fa fa-address-book"><i class="fa fa-address-book fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-exclamation-circle"><i class="fa fa-exclamation-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bell"><i class="fa fa-bell fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-500px"><i class="fa fa-500px fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-address-book"><i class="fa fa-address-book fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-address-book-o"><i class="fa fa-address-book-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-address-card"><i class="fa fa-address-card fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-address-card-o"><i class="fa fa-address-card-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-adjust"><i class="fa fa-adjust fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-adn"><i class="fa fa-adn fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-align-center"><i class="fa fa-align-center fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-align-justify"><i class="fa fa-align-justify fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-align-left"><i class="fa fa-align-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-align-right"><i class="fa fa-align-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-amazon"><i class="fa fa-amazon fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ambulance"><i class="fa fa-ambulance fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-american-sign-language-interpreting"><i class="fa fa-american-sign-language-interpreting fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-anchor"><i class="fa fa-anchor fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-android"><i class="fa fa-android fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angellist"><i class="fa fa-angellist fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-double-down"><i class="fa fa-angle-double-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-double-left"><i class="fa fa-angle-double-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-double-right"><i class="fa fa-angle-double-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-double-up"><i class="fa fa-angle-double-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-down"><i class="fa fa-angle-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-left"><i class="fa fa-angle-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-right"><i class="fa fa-angle-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-angle-up"><i class="fa fa-angle-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-apple"><i class="fa fa-apple fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-archive"><i class="fa fa-archive fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-area-chart"><i class="fa fa-area-chart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-down"><i class="fa fa-arrow-circle-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-left"><i class="fa fa-arrow-circle-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-o-down"><i class="fa fa-arrow-circle-o-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-o-left"><i class="fa fa-arrow-circle-o-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-o-right"><i class="fa fa-arrow-circle-o-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-o-up"><i class="fa fa-arrow-circle-o-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-right"><i class="fa fa-arrow-circle-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-circle-up"><i class="fa fa-arrow-circle-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-down"><i class="fa fa-arrow-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-left"><i class="fa fa-arrow-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-right"><i class="fa fa-arrow-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrow-up"><i class="fa fa-arrow-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrows"><i class="fa fa-arrows fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrows-alt"><i class="fa fa-arrows-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrows-h"><i class="fa fa-arrows-h fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-arrows-v"><i class="fa fa-arrows-v fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-asl-interpreting (alias)"><i class="fa fa-asl-interpreting (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-assistive-listening-systems"><i class="fa fa-assistive-listening-systems fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-asterisk"><i class="fa fa-asterisk fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-at"><i class="fa fa-at fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-audio-description"><i class="fa fa-audio-description fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-automobile (alias)"><i class="fa fa-automobile (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-backward"><i class="fa fa-backward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-balance-scale"><i class="fa fa-balance-scale fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ban"><i class="fa fa-ban fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bandcamp"><i class="fa fa-bandcamp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bank (alias)"><i class="fa fa-bank (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bar-chart"><i class="fa fa-bar-chart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bar-chart-o (alias)"><i class="fa fa-bar-chart-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-barcode"><i class="fa fa-barcode fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bars"><i class="fa fa-bars fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bath"><i class="fa fa-bath fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bathtub (alias)"><i class="fa fa-bathtub (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery (alias)"><i class="fa fa-battery (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-0 (alias)"><i class="fa fa-battery-0 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-1 (alias)"><i class="fa fa-battery-1 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-2 (alias)"><i class="fa fa-battery-2 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-3 (alias)"><i class="fa fa-battery-3 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-4 (alias)"><i class="fa fa-battery-4 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-empty"><i class="fa fa-battery-empty fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-full"><i class="fa fa-battery-full fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-half"><i class="fa fa-battery-half fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-quarter"><i class="fa fa-battery-quarter fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-battery-three-quarters"><i class="fa fa-battery-three-quarters fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bed"><i class="fa fa-bed fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-beer"><i class="fa fa-beer fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-behance"><i class="fa fa-behance fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-behance-square"><i class="fa fa-behance-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bell"><i class="fa fa-bell fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bell-o"><i class="fa fa-bell-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bell-slash"><i class="fa fa-bell-slash fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bell-slash-o"><i class="fa fa-bell-slash-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bicycle"><i class="fa fa-bicycle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-binoculars"><i class="fa fa-binoculars fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-birthday-cake"><i class="fa fa-birthday-cake fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bitbucket"><i class="fa fa-bitbucket fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bitbucket-square"><i class="fa fa-bitbucket-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bitcoin (alias)"><i class="fa fa-bitcoin (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-black-tie"><i class="fa fa-black-tie fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-blind"><i class="fa fa-blind fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bluetooth"><i class="fa fa-bluetooth fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bluetooth-b"><i class="fa fa-bluetooth-b fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bold"><i class="fa fa-bold fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bolt"><i class="fa fa-bolt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bomb"><i class="fa fa-bomb fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-book"><i class="fa fa-book fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bookmark"><i class="fa fa-bookmark fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bookmark-o"><i class="fa fa-bookmark-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-braille"><i class="fa fa-braille fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-briefcase"><i class="fa fa-briefcase fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-btc"><i class="fa fa-btc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bug"><i class="fa fa-bug fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-building"><i class="fa fa-building fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-building-o"><i class="fa fa-building-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bullhorn"><i class="fa fa-bullhorn fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bullseye"><i class="fa fa-bullseye fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-bus"><i class="fa fa-bus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-buysellads"><i class="fa fa-buysellads fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cab (alias)"><i class="fa fa-cab (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calculator"><i class="fa fa-calculator fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar"><i class="fa fa-calendar fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar-check-o"><i class="fa fa-calendar-check-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar-minus-o"><i class="fa fa-calendar-minus-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar-o"><i class="fa fa-calendar-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar-plus-o"><i class="fa fa-calendar-plus-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-calendar-times-o"><i class="fa fa-calendar-times-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-camera"><i class="fa fa-camera fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-camera-retro"><i class="fa fa-camera-retro fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-car"><i class="fa fa-car fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-down"><i class="fa fa-caret-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-left"><i class="fa fa-caret-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-right"><i class="fa fa-caret-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-square-o-down"><i class="fa fa-caret-square-o-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-square-o-left"><i class="fa fa-caret-square-o-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-square-o-right"><i class="fa fa-caret-square-o-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-square-o-up"><i class="fa fa-caret-square-o-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-caret-up"><i class="fa fa-caret-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cart-arrow-down"><i class="fa fa-cart-arrow-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cart-plus"><i class="fa fa-cart-plus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc"><i class="fa fa-cc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-amex"><i class="fa fa-cc-amex fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-diners-club"><i class="fa fa-cc-diners-club fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-discover"><i class="fa fa-cc-discover fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-jcb"><i class="fa fa-cc-jcb fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-mastercard"><i class="fa fa-cc-mastercard fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-paypal"><i class="fa fa-cc-paypal fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-stripe"><i class="fa fa-cc-stripe fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cc-visa"><i class="fa fa-cc-visa fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-certificate"><i class="fa fa-certificate fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chain (alias)"><i class="fa fa-chain (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chain-broken"><i class="fa fa-chain-broken fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-check"><i class="fa fa-check fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-check-circle"><i class="fa fa-check-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-check-circle-o"><i class="fa fa-check-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-check-square"><i class="fa fa-check-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-check-square-o"><i class="fa fa-check-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-circle-down"><i class="fa fa-chevron-circle-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-circle-left"><i class="fa fa-chevron-circle-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-circle-right"><i class="fa fa-chevron-circle-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-circle-up"><i class="fa fa-chevron-circle-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-down"><i class="fa fa-chevron-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-left"><i class="fa fa-chevron-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-right"><i class="fa fa-chevron-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chevron-up"><i class="fa fa-chevron-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-child"><i class="fa fa-child fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-chrome"><i class="fa fa-chrome fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-circle"><i class="fa fa-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-circle-o"><i class="fa fa-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-circle-o-notch"><i class="fa fa-circle-o-notch fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-circle-thin"><i class="fa fa-circle-thin fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-clipboard"><i class="fa fa-clipboard fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-clock-o"><i class="fa fa-clock-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-clone"><i class="fa fa-clone fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-close (alias)"><i class="fa fa-close (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cloud"><i class="fa fa-cloud fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cloud-download"><i class="fa fa-cloud-download fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cloud-upload"><i class="fa fa-cloud-upload fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cny (alias)"><i class="fa fa-cny (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-code"><i class="fa fa-code fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-code-fork"><i class="fa fa-code-fork fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-codepen"><i class="fa fa-codepen fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-codiepie"><i class="fa fa-codiepie fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-coffee"><i class="fa fa-coffee fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cog"><i class="fa fa-cog fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cogs"><i class="fa fa-cogs fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-columns"><i class="fa fa-columns fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-comment"><i class="fa fa-comment fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-comment-o"><i class="fa fa-comment-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-commenting"><i class="fa fa-commenting fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-commenting-o"><i class="fa fa-commenting-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-comments"><i class="fa fa-comments fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-comments-o"><i class="fa fa-comments-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-compass"><i class="fa fa-compass fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-compress"><i class="fa fa-compress fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-connectdevelop"><i class="fa fa-connectdevelop fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-contao"><i class="fa fa-contao fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-copy (alias)"><i class="fa fa-copy (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-copyright"><i class="fa fa-copyright fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-creative-commons"><i class="fa fa-creative-commons fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-credit-card"><i class="fa fa-credit-card fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-credit-card-alt"><i class="fa fa-credit-card-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-crop"><i class="fa fa-crop fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-crosshairs"><i class="fa fa-crosshairs fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-css3"><i class="fa fa-css3 fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cube"><i class="fa fa-cube fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cubes"><i class="fa fa-cubes fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cut (alias)"><i class="fa fa-cut (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-cutlery"><i class="fa fa-cutlery fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dashboard (alias)"><i class="fa fa-dashboard (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dashcube"><i class="fa fa-dashcube fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-database"><i class="fa fa-database fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-deaf"><i class="fa fa-deaf fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-deafness (alias)"><i class="fa fa-deafness (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dedent (alias)"><i class="fa fa-dedent (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-delicious"><i class="fa fa-delicious fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-desktop"><i class="fa fa-desktop fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-deviantart"><i class="fa fa-deviantart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-diamond"><i class="fa fa-diamond fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-digg"><i class="fa fa-digg fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dollar (alias)"><i class="fa fa-dollar (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dot-circle-o"><i class="fa fa-dot-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-download"><i class="fa fa-download fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dribbble"><i class="fa fa-dribbble fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-drivers-license (alias)"><i class="fa fa-drivers-license (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-drivers-license-o (alias)"><i class="fa fa-drivers-license-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-dropbox"><i class="fa fa-dropbox fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-drupal"><i class="fa fa-drupal fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-edge"><i class="fa fa-edge fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-edit (alias)"><i class="fa fa-edit (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eercast"><i class="fa fa-eercast fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eject"><i class="fa fa-eject fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ellipsis-h"><i class="fa fa-ellipsis-h fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ellipsis-v"><i class="fa fa-ellipsis-v fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-empire"><i class="fa fa-empire fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envelope"><i class="fa fa-envelope fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envelope-o"><i class="fa fa-envelope-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envelope-open"><i class="fa fa-envelope-open fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envelope-open-o"><i class="fa fa-envelope-open-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envelope-square"><i class="fa fa-envelope-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-envira"><i class="fa fa-envira fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eraser"><i class="fa fa-eraser fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-etsy"><i class="fa fa-etsy fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eur"><i class="fa fa-eur fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-euro (alias)"><i class="fa fa-euro (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-exchange"><i class="fa fa-exchange fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-exclamation"><i class="fa fa-exclamation fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-exclamation-circle"><i class="fa fa-exclamation-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-exclamation-triangle"><i class="fa fa-exclamation-triangle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-expand"><i class="fa fa-expand fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-expeditedssl"><i class="fa fa-expeditedssl fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-external-link"><i class="fa fa-external-link fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-external-link-square"><i class="fa fa-external-link-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eye"><i class="fa fa-eye fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eye-slash"><i class="fa fa-eye-slash fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-eyedropper"><i class="fa fa-eyedropper fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fa (alias)"><i class="fa fa-fa (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-facebook"><i class="fa fa-facebook fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-facebook-f (alias)"><i class="fa fa-facebook-f (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-facebook-official"><i class="fa fa-facebook-official fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-facebook-square"><i class="fa fa-facebook-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fast-backward"><i class="fa fa-fast-backward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fast-forward"><i class="fa fa-fast-forward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fax"><i class="fa fa-fax fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-feed (alias)"><i class="fa fa-feed (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-female"><i class="fa fa-female fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fighter-jet"><i class="fa fa-fighter-jet fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file"><i class="fa fa-file fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-archive-o"><i class="fa fa-file-archive-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-audio-o"><i class="fa fa-file-audio-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-code-o"><i class="fa fa-file-code-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-excel-o"><i class="fa fa-file-excel-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-image-o"><i class="fa fa-file-image-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-movie-o (alias)"><i class="fa fa-file-movie-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-o"><i class="fa fa-file-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-pdf-o"><i class="fa fa-file-pdf-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-photo-o (alias)"><i class="fa fa-file-photo-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-picture-o (alias)"><i class="fa fa-file-picture-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-powerpoint-o"><i class="fa fa-file-powerpoint-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-sound-o (alias)"><i class="fa fa-file-sound-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-text"><i class="fa fa-file-text fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-text-o"><i class="fa fa-file-text-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-video-o"><i class="fa fa-file-video-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-word-o"><i class="fa fa-file-word-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-file-zip-o (alias)"><i class="fa fa-file-zip-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-files-o"><i class="fa fa-files-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-film"><i class="fa fa-film fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-filter"><i class="fa fa-filter fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fire"><i class="fa fa-fire fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fire-extinguisher"><i class="fa fa-fire-extinguisher fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-firefox"><i class="fa fa-firefox fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-first-order"><i class="fa fa-first-order fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flag"><i class="fa fa-flag fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flag-checkered"><i class="fa fa-flag-checkered fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flag-o"><i class="fa fa-flag-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flash (alias)"><i class="fa fa-flash (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flask"><i class="fa fa-flask fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-flickr"><i class="fa fa-flickr fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-floppy-o"><i class="fa fa-floppy-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-folder"><i class="fa fa-folder fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-folder-o"><i class="fa fa-folder-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-folder-open"><i class="fa fa-folder-open fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-folder-open-o"><i class="fa fa-folder-open-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-font"><i class="fa fa-font fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-font-awesome"><i class="fa fa-font-awesome fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fonticons"><i class="fa fa-fonticons fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-fort-awesome"><i class="fa fa-fort-awesome fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-forumbee"><i class="fa fa-forumbee fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-forward"><i class="fa fa-forward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-foursquare"><i class="fa fa-foursquare fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-free-code-camp"><i class="fa fa-free-code-camp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-frown-o"><i class="fa fa-frown-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-futbol-o"><i class="fa fa-futbol-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gamepad"><i class="fa fa-gamepad fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gavel"><i class="fa fa-gavel fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gbp"><i class="fa fa-gbp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ge (alias)"><i class="fa fa-ge (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gear (alias)"><i class="fa fa-gear (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gears (alias)"><i class="fa fa-gears (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-genderless"><i class="fa fa-genderless fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-get-pocket"><i class="fa fa-get-pocket fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gg"><i class="fa fa-gg fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gg-circle"><i class="fa fa-gg-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gift"><i class="fa fa-gift fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-git"><i class="fa fa-git fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-git-square"><i class="fa fa-git-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-github"><i class="fa fa-github fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-github-alt"><i class="fa fa-github-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-github-square"><i class="fa fa-github-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gitlab"><i class="fa fa-gitlab fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gittip (alias)"><i class="fa fa-gittip (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-glass"><i class="fa fa-glass fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-glide"><i class="fa fa-glide fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-glide-g"><i class="fa fa-glide-g fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-globe"><i class="fa fa-globe fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google"><i class="fa fa-google fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google-plus"><i class="fa fa-google-plus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google-plus-circle (alias)"><i class="fa fa-google-plus-circle (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google-plus-official"><i class="fa fa-google-plus-official fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google-plus-square"><i class="fa fa-google-plus-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-google-wallet"><i class="fa fa-google-wallet fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-graduation-cap"><i class="fa fa-graduation-cap fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-gratipay"><i class="fa fa-gratipay fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-grav"><i class="fa fa-grav fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-group (alias)"><i class="fa fa-group (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-h-square"><i class="fa fa-h-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hacker-news"><i class="fa fa-hacker-news fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-grab-o (alias)"><i class="fa fa-hand-grab-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-lizard-o"><i class="fa fa-hand-lizard-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-o-down"><i class="fa fa-hand-o-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-o-left"><i class="fa fa-hand-o-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-o-right"><i class="fa fa-hand-o-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-o-up"><i class="fa fa-hand-o-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-paper-o"><i class="fa fa-hand-paper-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-peace-o"><i class="fa fa-hand-peace-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-pointer-o"><i class="fa fa-hand-pointer-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-rock-o"><i class="fa fa-hand-rock-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-scissors-o"><i class="fa fa-hand-scissors-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-spock-o"><i class="fa fa-hand-spock-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hand-stop-o (alias)"><i class="fa fa-hand-stop-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-handshake-o"><i class="fa fa-handshake-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hard-of-hearing (alias)"><i class="fa fa-hard-of-hearing (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hashtag"><i class="fa fa-hashtag fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hdd-o"><i class="fa fa-hdd-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-header"><i class="fa fa-header fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-headphones"><i class="fa fa-headphones fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-heart"><i class="fa fa-heart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-heart-o"><i class="fa fa-heart-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-heartbeat"><i class="fa fa-heartbeat fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-history"><i class="fa fa-history fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-home"><i class="fa fa-home fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hospital-o"><i class="fa fa-hospital-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hotel (alias)"><i class="fa fa-hotel (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass"><i class="fa fa-hourglass fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-1 (alias)"><i class="fa fa-hourglass-1 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-2 (alias)"><i class="fa fa-hourglass-2 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-3 (alias)"><i class="fa fa-hourglass-3 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-end"><i class="fa fa-hourglass-end fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-half"><i class="fa fa-hourglass-half fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-o"><i class="fa fa-hourglass-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-hourglass-start"><i class="fa fa-hourglass-start fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-houzz"><i class="fa fa-houzz fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-html5"><i class="fa fa-html5 fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-i-cursor"><i class="fa fa-i-cursor fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-id-badge"><i class="fa fa-id-badge fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-id-card"><i class="fa fa-id-card fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-id-card-o"><i class="fa fa-id-card-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ils"><i class="fa fa-ils fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-image (alias)"><i class="fa fa-image (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-imdb"><i class="fa fa-imdb fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-inbox"><i class="fa fa-inbox fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-indent"><i class="fa fa-indent fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-industry"><i class="fa fa-industry fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-info"><i class="fa fa-info fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-info-circle"><i class="fa fa-info-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-inr"><i class="fa fa-inr fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-instagram"><i class="fa fa-instagram fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-institution (alias)"><i class="fa fa-institution (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-internet-explorer"><i class="fa fa-internet-explorer fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-intersex (alias)"><i class="fa fa-intersex (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ioxhost"><i class="fa fa-ioxhost fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-italic"><i class="fa fa-italic fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-joomla"><i class="fa fa-joomla fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-jpy"><i class="fa fa-jpy fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-jsfiddle"><i class="fa fa-jsfiddle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-key"><i class="fa fa-key fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-keyboard-o"><i class="fa fa-keyboard-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-krw"><i class="fa fa-krw fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-language"><i class="fa fa-language fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-laptop"><i class="fa fa-laptop fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-lastfm"><i class="fa fa-lastfm fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-lastfm-square"><i class="fa fa-lastfm-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-leaf"><i class="fa fa-leaf fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-leanpub"><i class="fa fa-leanpub fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-legal (alias)"><i class="fa fa-legal (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-lemon-o"><i class="fa fa-lemon-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-level-down"><i class="fa fa-level-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-level-up"><i class="fa fa-level-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-life-bouy (alias)"><i class="fa fa-life-bouy (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-life-buoy (alias)"><i class="fa fa-life-buoy (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-life-ring"><i class="fa fa-life-ring fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-life-saver (alias)"><i class="fa fa-life-saver (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-lightbulb-o"><i class="fa fa-lightbulb-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-line-chart"><i class="fa fa-line-chart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-link"><i class="fa fa-link fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-linkedin"><i class="fa fa-linkedin fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-linkedin-square"><i class="fa fa-linkedin-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-linode"><i class="fa fa-linode fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-linux"><i class="fa fa-linux fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-list"><i class="fa fa-list fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-list-alt"><i class="fa fa-list-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-list-ol"><i class="fa fa-list-ol fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-list-ul"><i class="fa fa-list-ul fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-location-arrow"><i class="fa fa-location-arrow fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-lock"><i class="fa fa-lock fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-long-arrow-down"><i class="fa fa-long-arrow-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-long-arrow-left"><i class="fa fa-long-arrow-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-long-arrow-right"><i class="fa fa-long-arrow-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-long-arrow-up"><i class="fa fa-long-arrow-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-low-vision"><i class="fa fa-low-vision fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-magic"><i class="fa fa-magic fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-magnet"><i class="fa fa-magnet fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mail-forward (alias)"><i class="fa fa-mail-forward (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mail-reply (alias)"><i class="fa fa-mail-reply (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mail-reply-all (alias)"><i class="fa fa-mail-reply-all (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-male"><i class="fa fa-male fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-map"><i class="fa fa-map fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-map-marker"><i class="fa fa-map-marker fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-map-o"><i class="fa fa-map-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-map-pin"><i class="fa fa-map-pin fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-map-signs"><i class="fa fa-map-signs fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mars"><i class="fa fa-mars fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mars-double"><i class="fa fa-mars-double fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mars-stroke"><i class="fa fa-mars-stroke fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mars-stroke-h"><i class="fa fa-mars-stroke-h fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mars-stroke-v"><i class="fa fa-mars-stroke-v fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-maxcdn"><i class="fa fa-maxcdn fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-meanpath"><i class="fa fa-meanpath fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-medium"><i class="fa fa-medium fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-medkit"><i class="fa fa-medkit fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-meetup"><i class="fa fa-meetup fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-meh-o"><i class="fa fa-meh-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mercury"><i class="fa fa-mercury fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-microchip"><i class="fa fa-microchip fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-microphone"><i class="fa fa-microphone fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-microphone-slash"><i class="fa fa-microphone-slash fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-minus"><i class="fa fa-minus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-minus-circle"><i class="fa fa-minus-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-minus-square"><i class="fa fa-minus-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-minus-square-o"><i class="fa fa-minus-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mixcloud"><i class="fa fa-mixcloud fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mobile"><i class="fa fa-mobile fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mobile-phone (alias)"><i class="fa fa-mobile-phone (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-modx"><i class="fa fa-modx fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-money"><i class="fa fa-money fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-moon-o"><i class="fa fa-moon-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mortar-board (alias)"><i class="fa fa-mortar-board (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-motorcycle"><i class="fa fa-motorcycle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-mouse-pointer"><i class="fa fa-mouse-pointer fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-music"><i class="fa fa-music fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-navicon (alias)"><i class="fa fa-navicon (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-neuter"><i class="fa fa-neuter fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-newspaper-o"><i class="fa fa-newspaper-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-object-group"><i class="fa fa-object-group fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-object-ungroup"><i class="fa fa-object-ungroup fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-odnoklassniki"><i class="fa fa-odnoklassniki fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-odnoklassniki-square"><i class="fa fa-odnoklassniki-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-opencart"><i class="fa fa-opencart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-openid"><i class="fa fa-openid fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-opera"><i class="fa fa-opera fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-optin-monster"><i class="fa fa-optin-monster fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-outdent"><i class="fa fa-outdent fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pagelines"><i class="fa fa-pagelines fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paint-brush"><i class="fa fa-paint-brush fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paper-plane"><i class="fa fa-paper-plane fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paper-plane-o"><i class="fa fa-paper-plane-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paperclip"><i class="fa fa-paperclip fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paragraph"><i class="fa fa-paragraph fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paste (alias)"><i class="fa fa-paste (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pause"><i class="fa fa-pause fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pause-circle"><i class="fa fa-pause-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pause-circle-o"><i class="fa fa-pause-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paw"><i class="fa fa-paw fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-paypal"><i class="fa fa-paypal fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pencil"><i class="fa fa-pencil fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pencil-square"><i class="fa fa-pencil-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pencil-square-o"><i class="fa fa-pencil-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-percent"><i class="fa fa-percent fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-phone"><i class="fa fa-phone fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-phone-square"><i class="fa fa-phone-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-photo (alias)"><i class="fa fa-photo (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-picture-o"><i class="fa fa-picture-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pie-chart"><i class="fa fa-pie-chart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pied-piper"><i class="fa fa-pied-piper fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pied-piper-alt"><i class="fa fa-pied-piper-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pied-piper-pp"><i class="fa fa-pied-piper-pp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pinterest"><i class="fa fa-pinterest fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pinterest-p"><i class="fa fa-pinterest-p fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-pinterest-square"><i class="fa fa-pinterest-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plane"><i class="fa fa-plane fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-play"><i class="fa fa-play fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-play-circle"><i class="fa fa-play-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-play-circle-o"><i class="fa fa-play-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plug"><i class="fa fa-plug fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plus"><i class="fa fa-plus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plus-circle"><i class="fa fa-plus-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plus-square"><i class="fa fa-plus-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-plus-square-o"><i class="fa fa-plus-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-podcast"><i class="fa fa-podcast fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-power-off"><i class="fa fa-power-off fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-print"><i class="fa fa-print fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-product-hunt"><i class="fa fa-product-hunt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-puzzle-piece"><i class="fa fa-puzzle-piece fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-qq"><i class="fa fa-qq fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-qrcode"><i class="fa fa-qrcode fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-question"><i class="fa fa-question fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-question-circle"><i class="fa fa-question-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-question-circle-o"><i class="fa fa-question-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-quora"><i class="fa fa-quora fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-quote-left"><i class="fa fa-quote-left fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-quote-right"><i class="fa fa-quote-right fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ra (alias)"><i class="fa fa-ra (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-random"><i class="fa fa-random fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ravelry"><i class="fa fa-ravelry fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rebel"><i class="fa fa-rebel fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-recycle"><i class="fa fa-recycle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reddit"><i class="fa fa-reddit fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reddit-alien"><i class="fa fa-reddit-alien fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reddit-square"><i class="fa fa-reddit-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-refresh"><i class="fa fa-refresh fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-registered"><i class="fa fa-registered fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-remove (alias)"><i class="fa fa-remove (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-renren"><i class="fa fa-renren fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reorder (alias)"><i class="fa fa-reorder (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-repeat"><i class="fa fa-repeat fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reply"><i class="fa fa-reply fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-reply-all"><i class="fa fa-reply-all fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-resistance (alias)"><i class="fa fa-resistance (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-retweet"><i class="fa fa-retweet fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rmb (alias)"><i class="fa fa-rmb (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-road"><i class="fa fa-road fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rocket"><i class="fa fa-rocket fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rotate-left (alias)"><i class="fa fa-rotate-left (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rotate-right (alias)"><i class="fa fa-rotate-right (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rouble (alias)"><i class="fa fa-rouble (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rss"><i class="fa fa-rss fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rss-square"><i class="fa fa-rss-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rub"><i class="fa fa-rub fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ruble (alias)"><i class="fa fa-ruble (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-rupee (alias)"><i class="fa fa-rupee (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-s15 (alias)"><i class="fa fa-s15 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-safari"><i class="fa fa-safari fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-save (alias)"><i class="fa fa-save (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-scissors"><i class="fa fa-scissors fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-scribd"><i class="fa fa-scribd fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-search"><i class="fa fa-search fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-search-minus"><i class="fa fa-search-minus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-search-plus"><i class="fa fa-search-plus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sellsy"><i class="fa fa-sellsy fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-send (alias)"><i class="fa fa-send (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-send-o (alias)"><i class="fa fa-send-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-server"><i class="fa fa-server fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-share"><i class="fa fa-share fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-share-alt"><i class="fa fa-share-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-share-alt-square"><i class="fa fa-share-alt-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-share-square"><i class="fa fa-share-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-share-square-o"><i class="fa fa-share-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shekel (alias)"><i class="fa fa-shekel (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sheqel (alias)"><i class="fa fa-sheqel (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shield"><i class="fa fa-shield fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ship"><i class="fa fa-ship fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shirtsinbulk"><i class="fa fa-shirtsinbulk fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shopping-bag"><i class="fa fa-shopping-bag fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shopping-basket"><i class="fa fa-shopping-basket fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shopping-cart"><i class="fa fa-shopping-cart fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-shower"><i class="fa fa-shower fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sign-in"><i class="fa fa-sign-in fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sign-language"><i class="fa fa-sign-language fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sign-out"><i class="fa fa-sign-out fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-signal"><i class="fa fa-signal fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-signing (alias)"><i class="fa fa-signing (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-simplybuilt"><i class="fa fa-simplybuilt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sitemap"><i class="fa fa-sitemap fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-skyatlas"><i class="fa fa-skyatlas fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-skype"><i class="fa fa-skype fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-slack"><i class="fa fa-slack fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sliders"><i class="fa fa-sliders fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-slideshare"><i class="fa fa-slideshare fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-smile-o"><i class="fa fa-smile-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-snapchat"><i class="fa fa-snapchat fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-snapchat-ghost"><i class="fa fa-snapchat-ghost fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-snapchat-square"><i class="fa fa-snapchat-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-snowflake-o"><i class="fa fa-snowflake-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-soccer-ball-o (alias)"><i class="fa fa-soccer-ball-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort"><i class="fa fa-sort fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-alpha-asc"><i class="fa fa-sort-alpha-asc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-alpha-desc"><i class="fa fa-sort-alpha-desc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-amount-asc"><i class="fa fa-sort-amount-asc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-amount-desc"><i class="fa fa-sort-amount-desc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-asc"><i class="fa fa-sort-asc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-desc"><i class="fa fa-sort-desc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-down (alias)"><i class="fa fa-sort-down (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-numeric-asc"><i class="fa fa-sort-numeric-asc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-numeric-desc"><i class="fa fa-sort-numeric-desc fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sort-up (alias)"><i class="fa fa-sort-up (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-soundcloud"><i class="fa fa-soundcloud fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-space-shuttle"><i class="fa fa-space-shuttle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-spinner"><i class="fa fa-spinner fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-spoon"><i class="fa fa-spoon fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-spotify"><i class="fa fa-spotify fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-square"><i class="fa fa-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-square-o"><i class="fa fa-square-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stack-exchange"><i class="fa fa-stack-exchange fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stack-overflow"><i class="fa fa-stack-overflow fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star"><i class="fa fa-star fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star-half"><i class="fa fa-star-half fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star-half-empty (alias)"><i class="fa fa-star-half-empty (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star-half-full (alias)"><i class="fa fa-star-half-full (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star-half-o"><i class="fa fa-star-half-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-star-o"><i class="fa fa-star-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-steam"><i class="fa fa-steam fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-steam-square"><i class="fa fa-steam-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-step-backward"><i class="fa fa-step-backward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-step-forward"><i class="fa fa-step-forward fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stethoscope"><i class="fa fa-stethoscope fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sticky-note"><i class="fa fa-sticky-note fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sticky-note-o"><i class="fa fa-sticky-note-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stop"><i class="fa fa-stop fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stop-circle"><i class="fa fa-stop-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stop-circle-o"><i class="fa fa-stop-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-street-view"><i class="fa fa-street-view fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-strikethrough"><i class="fa fa-strikethrough fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stumbleupon"><i class="fa fa-stumbleupon fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-stumbleupon-circle"><i class="fa fa-stumbleupon-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-subscript"><i class="fa fa-subscript fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-subway"><i class="fa fa-subway fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-suitcase"><i class="fa fa-suitcase fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-sun-o"><i class="fa fa-sun-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-superpowers"><i class="fa fa-superpowers fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-superscript"><i class="fa fa-superscript fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-support (alias)"><i class="fa fa-support (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-table"><i class="fa fa-table fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tablet"><i class="fa fa-tablet fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tachometer"><i class="fa fa-tachometer fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tag"><i class="fa fa-tag fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tags"><i class="fa fa-tags fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tasks"><i class="fa fa-tasks fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-taxi"><i class="fa fa-taxi fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-telegram"><i class="fa fa-telegram fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-television"><i class="fa fa-television fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tencent-weibo"><i class="fa fa-tencent-weibo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-terminal"><i class="fa fa-terminal fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-text-height"><i class="fa fa-text-height fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-text-width"><i class="fa fa-text-width fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-th"><i class="fa fa-th fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-th-large"><i class="fa fa-th-large fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-th-list"><i class="fa fa-th-list fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-themeisle"><i class="fa fa-themeisle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer (alias)"><i class="fa fa-thermometer (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-0 (alias)"><i class="fa fa-thermometer-0 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-1 (alias)"><i class="fa fa-thermometer-1 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-2 (alias)"><i class="fa fa-thermometer-2 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-3 (alias)"><i class="fa fa-thermometer-3 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-4 (alias)"><i class="fa fa-thermometer-4 (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-empty"><i class="fa fa-thermometer-empty fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-full"><i class="fa fa-thermometer-full fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-half"><i class="fa fa-thermometer-half fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-quarter"><i class="fa fa-thermometer-quarter fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thermometer-three-quarters"><i class="fa fa-thermometer-three-quarters fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thumb-tack"><i class="fa fa-thumb-tack fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thumbs-down"><i class="fa fa-thumbs-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thumbs-o-down"><i class="fa fa-thumbs-o-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thumbs-o-up"><i class="fa fa-thumbs-o-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-thumbs-up"><i class="fa fa-thumbs-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-ticket"><i class="fa fa-ticket fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-times"><i class="fa fa-times fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-times-circle"><i class="fa fa-times-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-times-circle-o"><i class="fa fa-times-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-times-rectangle (alias)"><i class="fa fa-times-rectangle (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-times-rectangle-o (alias)"><i class="fa fa-times-rectangle-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tint"><i class="fa fa-tint fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-down (alias)"><i class="fa fa-toggle-down (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-left (alias)"><i class="fa fa-toggle-left (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-off"><i class="fa fa-toggle-off fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-on"><i class="fa fa-toggle-on fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-right (alias)"><i class="fa fa-toggle-right (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-toggle-up (alias)"><i class="fa fa-toggle-up (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-trademark"><i class="fa fa-trademark fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-train"><i class="fa fa-train fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-transgender"><i class="fa fa-transgender fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-transgender-alt"><i class="fa fa-transgender-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-trash"><i class="fa fa-trash fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-trash-o"><i class="fa fa-trash-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tree"><i class="fa fa-tree fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-trello"><i class="fa fa-trello fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tripadvisor"><i class="fa fa-tripadvisor fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-trophy"><i class="fa fa-trophy fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-truck"><i class="fa fa-truck fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-try"><i class="fa fa-try fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tty"><i class="fa fa-tty fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tumblr"><i class="fa fa-tumblr fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tumblr-square"><i class="fa fa-tumblr-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-turkish-lira (alias)"><i class="fa fa-turkish-lira (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-tv (alias)"><i class="fa fa-tv (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-twitch"><i class="fa fa-twitch fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-twitter"><i class="fa fa-twitter fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-twitter-square"><i class="fa fa-twitter-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-umbrella"><i class="fa fa-umbrella fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-underline"><i class="fa fa-underline fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-undo"><i class="fa fa-undo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-universal-access"><i class="fa fa-universal-access fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-university"><i class="fa fa-university fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-unlink (alias)"><i class="fa fa-unlink (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-unlock"><i class="fa fa-unlock fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-unlock-alt"><i class="fa fa-unlock-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-unsorted (alias)"><i class="fa fa-unsorted (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-upload"><i class="fa fa-upload fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-usb"><i class="fa fa-usb fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-usd"><i class="fa fa-usd fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user"><i class="fa fa-user fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-circle"><i class="fa fa-user-circle fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-circle-o"><i class="fa fa-user-circle-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-md"><i class="fa fa-user-md fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-o"><i class="fa fa-user-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-plus"><i class="fa fa-user-plus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-secret"><i class="fa fa-user-secret fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-user-times"><i class="fa fa-user-times fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-users"><i class="fa fa-users fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vcard (alias)"><i class="fa fa-vcard (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vcard-o (alias)"><i class="fa fa-vcard-o (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-venus"><i class="fa fa-venus fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-venus-double"><i class="fa fa-venus-double fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-venus-mars"><i class="fa fa-venus-mars fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-viacoin"><i class="fa fa-viacoin fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-viadeo"><i class="fa fa-viadeo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-viadeo-square"><i class="fa fa-viadeo-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-video-camera"><i class="fa fa-video-camera fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vimeo"><i class="fa fa-vimeo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vimeo-square"><i class="fa fa-vimeo-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vine"><i class="fa fa-vine fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-vk"><i class="fa fa-vk fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-volume-control-phone"><i class="fa fa-volume-control-phone fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-volume-down"><i class="fa fa-volume-down fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-volume-off"><i class="fa fa-volume-off fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-volume-up"><i class="fa fa-volume-up fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-warning (alias)"><i class="fa fa-warning (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wechat (alias)"><i class="fa fa-wechat (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-weibo"><i class="fa fa-weibo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-weixin"><i class="fa fa-weixin fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-whatsapp"><i class="fa fa-whatsapp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wheelchair"><i class="fa fa-wheelchair fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wheelchair-alt"><i class="fa fa-wheelchair-alt fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wifi"><i class="fa fa-wifi fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wikipedia-w"><i class="fa fa-wikipedia-w fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-window-close"><i class="fa fa-window-close fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-window-close-o"><i class="fa fa-window-close-o fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-window-maximize"><i class="fa fa-window-maximize fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-window-minimize"><i class="fa fa-window-minimize fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-window-restore"><i class="fa fa-window-restore fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-windows"><i class="fa fa-windows fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-won (alias)"><i class="fa fa-won (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wordpress"><i class="fa fa-wordpress fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wpbeginner"><i class="fa fa-wpbeginner fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wpexplorer"><i class="fa fa-wpexplorer fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wpforms"><i class="fa fa-wpforms fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-wrench"><i class="fa fa-wrench fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-xing"><i class="fa fa-xing fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-xing-square"><i class="fa fa-xing-square fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-y-combinator"><i class="fa fa-y-combinator fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-y-combinator-square (alias)"><i class="fa fa-y-combinator-square (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yahoo"><i class="fa fa-yahoo fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yc (alias)"><i class="fa fa-yc (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yc-square (alias)"><i class="fa fa-yc-square (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yelp"><i class="fa fa-yelp fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yen (alias)"><i class="fa fa-yen (alias) fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-yoast"><i class="fa fa-yoast fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-youtube"><i class="fa fa-youtube fa-2x"></i></li>
+                        <li class="list-inline-item" data-icon="fa fa-youtube-play"><i class="fa fa-youtube-play fa-2x"></i></li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
+
+
+<script>
+
+    // show the configuration modal for Alarm start details
+    function showDefineAlarmStartDetailsModal(statusIndex, statusName, alarmStartText1Structure, alarmStartText2Structure, alarmStartText3Structure) {
+        $('#alarmIndex').text(statusIndex);
+        $('#alarmName').text(statusName);
+
+        function isChecked(structure) {
+            return structure.split('|')[0] === 'ON';
+        }
+
+        $('#failureLocationEnabled').prop('checked', isChecked(alarmStartText1Structure));
+        $('#failureTypeEnabled').prop('checked', isChecked(alarmStartText2Structure));
+        $('#detailsTextFieldEnabled').prop('checked', isChecked(alarmStartText3Structure));
+
+        function setOptions(structure, targetId) {
+            const options = structure.split('|').slice(1).join('|');
+            $(targetId).val(options);
+        }
+
+        setOptions(alarmStartText1Structure, '#failureLocationOptions');
+        setOptions(alarmStartText2Structure, '#failureTypeOptions');
+
+        $('#defineAlarmStartDetailsModal').modal('show');
+    }
+
+    function saveAndClose() {
+        const statusIndex = $('#alarmIndex').text();
+        const failureLocationEnabled = $('#failureLocationEnabled').prop('checked');
+        const failureTypeEnabled = $('#failureTypeEnabled').prop('checked');
+        const detailsTextFieldEnabled = $('#detailsTextFieldEnabled').prop('checked');
+
+        const failureLocationOptions = (failureLocationEnabled ? 'ON' : 'OFF') + '|' + $('#failureLocationOptions').val().replace(/\n/g, '|');
+        const failureTypeOptions = (failureTypeEnabled ? 'ON' : 'OFF') + '|' + $('#failureTypeOptions').val().replace(/\n/g, '|');
+        const detailsTextOptions = (detailsTextFieldEnabled ? 'ON' : 'OFF') + '|';
+
+        const url = '/Settings/UpdateAlarmStartDetails';
+    
+        const data = {
+            statusIndex: statusIndex,
+            failureLocationOptions: failureLocationOptions,
+            failureTypeOptions: failureTypeOptions,
+            detailsTextOptions: detailsTextOptions
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: data,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    console.log('Values updated successfully.');
+                    hideDefineAlarmStartDetailsModal();
+                    location.reload();
+                } else {
+                    console.log('An error occurred while updating the values.');
+                }
+            },
+            error: function() {
+                console.log('An error occurred while updating the values.');
+            }
+        });
+    }
+    
+    function hideDefineAlarmStartDetailsModal() {
+        $('#alarmIndex').text('');
+        $('#alarmName').text('');
+        $('#defineAlarmStartDetailsModal').modal('hide');
+    }
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('[id^="iconBtn"]').click(function () {
+            var index = $(this).data('index'); // Get the index of the current button from the data attribute
+            $('#iconModal').data('index', index); // Store the index in the modal's data attribute
+            $('#iconModal').modal('show');
+        });
+
+        $('#closeModalBtn').click(function () {
+            $('#iconModal').modal('hide');
+        });
+
+        $('.list-inline-item').click(function () {
+            var index = $('#iconModal').data('index'); // Get the index of the current button from the data attribute
+            var icon = $(this).data('icon'); // Get the data-icon attribute of the clicked element
+            $('#iconName_' + index).val(icon); // Set the value of the hidden input field to the selected icon name
+            $('#iconModal').modal('hide'); // Hide the modal
+            $('#iconForm_' + index).submit();// Submit the form when the icon is clicked
+        });
+    });
+</script>
+
+<style>
+    .modal-dialog {
+        max-width: 80%;
+    }
+    .modal-table td {
+        padding: 5px 10px;
+        width: 33%;
+    }
+    .checkbox-wrapper {
+        display: inline-block;
+    }
+</style>

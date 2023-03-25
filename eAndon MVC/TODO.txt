@@ -1,16 +1,22 @@
-﻿ - Make WorkcenterName in dbo.WorkcenterList unique
+﻿
 
 
-- navbar vertical
-- bootstrap
+- instrukce na predni stranku
 
-- preklady
-- zrezetovani vstupnich dat
-- nahravani obrazku do typu alarmu
-
-
+- zrezetovani vstupnich dat - naplneni SQL tabulek puvodnimi daty
 
 LOG
-- do logu misto status index radeji typ alarmu, protoze status index se muze menit
-- spojit pomoci ID zacatek a konec alarmu
+- MTTR, MTBF - zkontrolovat MTBF
+
+----------------------------------
+
+- scrollovaci okno v historii a logu
+
+- prepinac jazyka dolu do Layout
+
+
+AndonTerminal a Overview
+- posledni alarm detaily
+- modal s detaily k alarmum - konec alarmu
+
 

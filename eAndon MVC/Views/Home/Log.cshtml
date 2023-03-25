@@ -1,56 +1,112 @@
-﻿@model IEnumerable<WorkcenterStatusLog>
+﻿@model IEnumerable<AndonLog>
+@inject MyDbContext dbContext
 
 @{
-    ViewData["Title"] = "Log";
+    ViewData["Title"] = "Alarm Log";
+
+    var language = dbContext.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = dbContext.Localization!
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
+
 }
 
-<h1>Log</h1>
+<span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "AlarmLog")?.Text</span>
 
-<form asp-action="Log" method="get">
+<form asp-action="Log" method="get" class="filter-form">
     <div>
-        <label for="startDate">Start Date:</label>
+        <label for="startDate">@translations.FirstOrDefault(t => t.Id == "AlarmStartDate")?.Text:</label>
         <input type="date" name="startDate" value="@Context.Request.Query["startDate"]">
     </div>
     <div>
-        <label for="endDate">End Date:</label>
-        <input type="date" name="endDate" value="@Context.Request.Query["endDate"]">
+        <label for="endDate">@translations.FirstOrDefault(t => t.Id == "AlarmEndDate")?.Text:</label>
+        <input type="date" name="endDate" value="@(Context.Request.Query["endDate"].Count > 0 ? Context.Request.Query["endDate"] : DateTime.Now.ToString("yyyy-MM-dd"))">
     </div>
     <div>
-        <label for="workcenterID">Workcenter:</label>
+        <label for="workcenterID">@translations.FirstOrDefault(t => t.Id == "Workcenter")?.Text:</label>
         <select name="workcenterID">
-            <option value="" selected>All</option>
-            @foreach (var workcenterID in ViewBag.Workcenters)
+            <option value="">@translations.FirstOrDefault(t => t.Id == "All")?.Text</option>
+            @foreach (var workcenter in ViewBag.Workcenters)
             {
-                <option value="@workcenterID">@workcenterID</option>
+                <option value="@workcenter.WorkcenterID" selected="@(Context.Request.Query["workcenterID"] == workcenter.WorkcenterID)">@workcenter.WorkcenterID @workcenter.WorkcenterName</option>
             }
         </select>
     </div>
-    <button type="submit">Filter</button>
+    <div>
+        <label for="showFinishedAlarms">@translations.FirstOrDefault(t => t.Id == "ShowOnlyFinishedAlarms")?.Text</label>
+        <input type="checkbox" name="showFinishedAlarms" value="true" @(Context.Request.Query["showFinishedAlarms"] == "true" ? "checked" : "")>
+    </div>
+    <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "ShowLogEntries")?.Text</button>
 </form>
 
+<p>&nbsp;</p>
 @if (Context.Request.Query.Keys.Contains("startDate") || Context.Request.Query.Keys.Contains("endDate") || Context.Request.Query.Keys.Contains("workcenterID"))
 {
-    <table class="table">
-        <thead>
+    <table class="table" style="border: 2px solid #1C2331;">
+        <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
         <tr>
-            <th>Workcenter ID</th>
-            <th>Alarm type</th>
-            <th>Old Status</th>
-            <th>New Status</th>
-            <th>Change Date Time</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "WorkcenterID")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "WorkcenterName")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmName")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmStartTime")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmEndTime")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "DurationMin")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureType")?.Text</th>
+                <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureDetails")?.Text</th>
         </tr>
         </thead>
         <tbody>
-        @foreach (var logEntry in Model)
-        {
-            <tr>
-                <td>@logEntry.WorkcenterID</td>
-                <td>@ViewBag.StatusDefinitions[logEntry.StatusIndex].StatusName</td>
-                <td>@logEntry.OldStatus</td>
-                <td>@logEntry.NewStatus</td>
-                <td>@logEntry.ChangeDateTime</td>
-            </tr>
-        }
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td style="border: 1px solid #1C2331;">@log.WorkcenterID</td>
+                        <td style="border: 1px solid #1C2331;">@log.WorkcenterName</td>
+                        <td style="border: 1px solid #1C2331;">@log.AlarmName</td>
+                        <td style="border: 1px solid #1C2331;">@(log.AlarmStartTime == DateTime.MinValue ? " -- " : log.AlarmStartTime.ToString())</td>
+                        <td style="border: 1px solid #1C2331;">@(log.AlarmEndTime == DateTime.MinValue ? " -- " : log.AlarmEndTime.ToString())</td>
+                        @{
+                            var currentTime = DateTime.Now;
+                            var duration = log.AlarmEndTime == DateTime.MinValue ? (currentTime - log.AlarmStartTime).TotalMinutes : (log.AlarmEndTime - log.AlarmStartTime).TotalMinutes;
+                            var durationDisplay = $"{duration:0.0}";
+                        }
+                        <td style="border: 1px solid #1C2331;">@durationDisplay</td>
+                        <td style="border: 1px solid #1C2331;">@log.AlarmStartText1</td>
+                        <td style="border: 1px solid #1C2331;">@log.AlarmStartText2</td>
+                        <td style="border: 1px solid #1C2331;">@log.AlarmStartText3</td>
+                        </tr>
+                }
         </tbody>
     </table>
 }
+
+                        
+<style>
+    .filter-form {
+        background-color: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 10px;
+        margin-top: 15px !important; /* Add top margin */
+        margin-bottom: 15px !important; /* Modify bottom margin */
+        border-radius: 5px;
+    }
+
+    .filter-form div {
+        margin: 0 10px;
+    }
+
+    .filter-form label {
+        margin-right: 5px;
+    }
+
+    form label {
+        color: black;
+        font-weight: bold;
+    }
+</style>

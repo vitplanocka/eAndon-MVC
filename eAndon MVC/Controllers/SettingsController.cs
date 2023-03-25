@@ -17,16 +17,18 @@ namespace eAndon_MVC.Controllers
         // GET: StatusDefinition
         public async Task<IActionResult> Settings()
         {
-            var statusDefinitions = await _db.StatusDefinition.OrderBy(w => w.StatusRow).ToListAsync();
-            
-            // Retrieve the list of WorkcenterList objects
-            var workcenterList = _db.WorkcenterList.ToList();
+            var statusDefinitionsList = await _db.StatusDefinition.OrderBy(w => w.StatusRow).ToListAsync();
+            var workcenterList = await _db.WorkcenterList.ToListAsync();
+            var settingsList = await _db.Settings.ToListAsync();
+            var localizationList = await _db.Localization.ToListAsync();
 
-            // Add both lists to the ViewBag
-            ViewBag.StatusList = statusDefinitions;
+            // Add lists to the ViewBag
+            ViewBag.StatusList = statusDefinitionsList;
             ViewBag.Workcenters = workcenterList;
+            ViewBag.SettingsList = settingsList;
+            ViewBag.Localization = localizationList;
             
-            return View("~/Views/Home/Settings.cshtml", statusDefinitions);
+            return View("~/Views/Home/Settings.cshtml", statusDefinitionsList);
         }
 
         #region WorkcenterList
@@ -133,7 +135,7 @@ namespace eAndon_MVC.Controllers
         public async Task<IActionResult> DeleteWorkcenter(int workcenterRow)
         {
             // Find the workcenter with the given row number
-            var workcenterToDelete = await _db.WorkcenterList.FindAsync(workcenterRow);
+            var workcenterToDelete = await _db.WorkcenterList.FindAsync(workcenterRow - 1);
             if (workcenterToDelete == null)
             {
                 return NotFound();
@@ -147,16 +149,16 @@ namespace eAndon_MVC.Controllers
             // Shift the columns for the remaining workcenters in the table
             foreach (var wc in workcentersToUpdate)
             {
-                var lowerWc = await _db.WorkcenterList.FindAsync(wc.WorkcenterRow - 1);
-                if (lowerWc != null)
+                var higherWc = await _db.WorkcenterList.FindAsync(wc.WorkcenterRow + 1);
+                if (higherWc != null)
                 {
-                    wc.WorkcenterID = lowerWc.WorkcenterID; // Update WorkcenterID
-                    wc.WorkcenterName = lowerWc.WorkcenterName; // Update WorkcenterName
-                    wc.Status1 = lowerWc.Status1;
-                    wc.Status2 = lowerWc.Status2;
-                    wc.Status3 = lowerWc.Status3;
-                    wc.Status4 = lowerWc.Status4;
-                    wc.Status5 = lowerWc.Status5;
+                    wc.WorkcenterID = higherWc.WorkcenterID; // Update WorkcenterID
+                    wc.WorkcenterName = higherWc.WorkcenterName; // Update WorkcenterName
+                    wc.Status1 = higherWc.Status1;
+                    wc.Status2 = higherWc.Status2;
+                    wc.Status3 = higherWc.Status3;
+                    wc.Status4 = higherWc.Status4;
+                    wc.Status5 = higherWc.Status5;
                 }
 
                 _db.Entry(wc).State = EntityState.Modified;
@@ -275,14 +277,17 @@ namespace eAndon_MVC.Controllers
             var tempStatusName = status.StatusName;
             var tempStatusEnabled = status.StatusEnabled;
             var tempStatusDetailsEnabled = status.StatusDetailsEnabled;
+            var tempIconName = status.IconName;
 
             status.StatusName = prevStatus.StatusName;
             status.StatusEnabled = prevStatus.StatusEnabled;
             status.StatusDetailsEnabled = prevStatus.StatusDetailsEnabled;
+            status.IconName = prevStatus.IconName;
    
             prevStatus.StatusName = tempStatusName;
             prevStatus.StatusEnabled = tempStatusEnabled;
             prevStatus.StatusDetailsEnabled = tempStatusDetailsEnabled;
+            prevStatus.IconName = tempIconName;
 
             // Save changes to the database
             await _db.SaveChangesAsync();
@@ -313,14 +318,17 @@ namespace eAndon_MVC.Controllers
             var tempStatusName = status.StatusName;
             var tempStatusEnabled = status.StatusEnabled;
             var tempStatusDetailsEnabled = status.StatusDetailsEnabled;
+            var tempIconName = status.IconName;
 
             status.StatusName = nextStatus.StatusName;
             status.StatusEnabled = nextStatus.StatusEnabled;
             status.StatusDetailsEnabled = nextStatus.StatusDetailsEnabled;
+            status.IconName = nextStatus.IconName;
    
             nextStatus.StatusName = tempStatusName;
             nextStatus.StatusEnabled = tempStatusEnabled;
             nextStatus.StatusDetailsEnabled = tempStatusDetailsEnabled;
+            nextStatus.IconName = tempIconName;
 
             // Save changes to the database
             await _db.SaveChangesAsync();
@@ -377,9 +385,128 @@ namespace eAndon_MVC.Controllers
             return RedirectToAction("Settings", "Settings");
         }
 
+        [HttpPost]
+        public IActionResult UpdateAlarmTypeIcon(int statusRow, string iconName)
+        {
+            // Update the alarm type with the specified statusRow to use the specified iconName
+            // Retrieve the StatusDefinition object with the given StatusRow
+            var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusRow);
+
+            // Update the StatusName property of the StatusDefinition object
+            if (status != null) status.IconName = iconName;
+
+            // Save changes to the database
+            _db.SaveChanges();
+
+            // Redirect back to the settings page
+            return RedirectToAction("Settings", "Settings");
+        }
+        
+        [HttpPost]
+        public IActionResult UpdateAlarmStartDetails(int statusIndex, string failureLocationOptions, string failureTypeOptions, string detailsTextOptions)
+        {
+            // Retrieve the StatusDefinition object with the given statusIndex
+            var status = _db.StatusDefinition.FirstOrDefault(s => s.StatusRow == statusIndex + 1);
+
+            // Update the AlarmStartText1Structure, AlarmStartText2Structure, and AlarmStartText3Structure properties of the StatusDefinition object
+            if (status != null)
+            {
+                status.AlarmStartText1Structure = failureLocationOptions;
+                status.AlarmStartText2Structure = failureTypeOptions;
+                status.AlarmStartText3Structure = detailsTextOptions;
+            }
+
+            // Save changes to the database
+            _db.SaveChanges();
+
+            // Return a JSON response indicating success or failure
+            return Json(new { success = status != null });
+        }
+        
+        #endregion
+
+        #region InterfaceSettings
+
+        public IActionResult ResetInterfaceSettings()
+        {
+            // Retrieve the StatusDefinition object with the given StatusRow
+            var settings = _db.Settings;
+
+            // Return to default settings
+            foreach (var setting in settings)
+            {
+                setting.CurrentSetting = setting.DefaultSetting;
+            }
+
+            // Save changes to the database
+            _db.SaveChanges();
+
+            // Redirect back to the Settings page
+            return RedirectToAction("Settings", "Settings");
+        }
+
+        [HttpPost]
+        public IActionResult UpdateSetting(int settingID, string settingValue)
+        {
+            // Retrieve the setting object with the given SettingName
+            var setting = _db.Settings.FirstOrDefault(s => s.SettingID == settingID);
+
+            if (setting != null)
+            {
+                // Update the setting's CurrentSetting value
+                setting.CurrentSetting = settingValue;
+
+                // Save changes to the database
+                _db.SaveChanges();
+            }
+
+            // Redirect back to the Settings page
+            return RedirectToAction("Settings", "Settings");
+        }
+
+        public class UpdateSettingRequest
+        {
+            public int SettingID { get; set; }
+            public string SettingValue { get; set; } = null!;
+        }
+
+        [HttpPost]
+        public IActionResult UpdateSettingFromOverview([FromBody] UpdateSettingRequest request)
+        {
+            // Retrieve the setting object with the given SettingName
+            var setting = _db.Settings.FirstOrDefault(s => s.SettingID == request.SettingID);
+
+            if (setting != null)
+            {
+                // Update the setting's CurrentSetting value
+                setting.CurrentSetting = request.SettingValue;
+
+                // Save changes to the database
+                _db.SaveChanges();
+            }
+
+            // Return a success response
+            return Ok();
+        }
+
 
         #endregion
 
+        #region Localization
+
+        [HttpPost]
+        public IActionResult UpdateTranslation(string localizationId, string localizedText)
+        {
+            var localization = _db.Localization.FirstOrDefault(l => l.Id == localizationId);
+            if (localization != null)
+            {
+                localization.Translation = localizedText;
+                _db.SaveChanges();
+            }
+            return RedirectToAction("Settings");
+        }
+
+        #endregion
 
 
     }

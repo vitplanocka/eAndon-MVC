@@ -1,22 +1,63 @@
 ﻿@model List<AndonTerminalModel>
 
 @{
-    ViewBag.Title = "Overview";
-    var statusNames = Model[0].StatusDefinitions.Where(s => s.StatusEnabled).ToList(); 
+    ViewBag.Title = "Alarm Overview";
+    @using (Html.BeginForm("UpdateSetting", "Settings", FormMethod.Post, new { id = "updateSettingForm", style = "display: none" }))
+    {
+        @Html.AntiForgeryToken()
+    }
+    
+    var statusNamesLocal = Model[0].StatusDefinitions.Where(s => s.StatusEnabled).ToList();
+
+    // load settings
+    var showWorkcenterNameLocal = Model[0].Settings!.FirstOrDefault(s => s.SettingName == "Show workcenter name?");
+    var showOnlyWorkcentersWithAlarms = Model[0].Settings!.FirstOrDefault(s => s.SettingName == "Show only workcenters with alarms in Overivew?");
+    var language = Model[0].Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = Model[0].Localizations!
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
 }
-<h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
+<span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "AlarmOverview")?.Text</span>
+<span class="hidden" id="noAlarmsTranslation">@translations.FirstOrDefault(t => t.Id == "NoWorkcentersWithActiveAlarms")?.Text</span>
+
+<script src="~/lib/signalr/signalr.js"></script>
 
 
 <div class="text-center">
-
-    <table style="border: 1px solid black; font-family: Verdana; color: #444;">
+    @if (showOnlyWorkcentersWithAlarms != null)
+    {
+        <label>
+            <input type="checkbox" id="showActiveAlarmsOnly" @(showOnlyWorkcentersWithAlarms.CurrentSetting == "Yes" ? "checked" : "")> @translations.FirstOrDefault(t => t.Id == "ShowOnlyActiveAlarms")?.Text
+        </label>
+    }
+    <table class="alarm-table" style="border: 2px solid #1C2331; color: #444 !important;">
+        
         <thead>
         <tr>
-            <th>Workcenter</th>
-            @foreach (var statusName in statusNames)
+            <th></th>
+            @if (showWorkcenterNameLocal == null || showWorkcenterNameLocal.CurrentSetting == "Yes")
+            {
+                <th></th>
+            }
+
+            @foreach (var statusName in statusNamesLocal)
             {
                 <th>@statusName.StatusName</th>
+            }
+        </tr>
+        <tr>
+                <th>@translations.FirstOrDefault(t => t.Id == "WorkcenterID")?.Text</th>
+            @if (showWorkcenterNameLocal == null || showWorkcenterNameLocal.CurrentSetting == "Yes")
+            {
+                    <th>@translations.FirstOrDefault(t => t.Id == "WorkcenterName")?.Text</th>
+            }
+            @foreach (var statusName in statusNamesLocal)
+            {
+                <th><i class="@statusName.IconName fa-3x"></i></th>
             }
         </tr>
         </thead>
@@ -24,7 +65,13 @@
         @foreach (var workcenter in Model)
         {
             <tr>
-                <td>@workcenter.WorkcenterID</td>
+                    <td onclick="openAlarmHistoryModal('@workcenter.WorkcenterID', '@workcenter.WorkcenterName')" style="cursor: pointer;">
+                    <i class="fa fa-history fa-lg">&nbsp;</i> @workcenter.WorkcenterID
+                </td>
+                @if (showWorkcenterNameLocal == null || showWorkcenterNameLocal.CurrentSetting == "Yes")
+                {
+                        <td onclick="openAlarmHistoryModal('@workcenter.WorkcenterID', '@workcenter.WorkcenterName')" style="cursor: pointer;">@workcenter.WorkcenterName</td>
+                }
                 @if (workcenter.StatusValues != null)
                 {
                     for (var statusIndex = 0; statusIndex < workcenter.StatusValues.Count(); statusIndex++)
@@ -33,7 +80,34 @@
                         if (statusDefinition.StatusEnabled)
                         {
                             var statusValue = workcenter.StatusValues[statusIndex];
-                            <td id="status_@(statusIndex)" style="background-color: @(statusValue == "green" ? "green" : "red"); cursor: pointer;">@statusValue</td>
+                          
+                            if (statusValue.Split("|")[0] == "green")
+                            {
+                                <td id="@(workcenter.WorkcenterID)_status_@(statusIndex)" class="green-bg alarm-td" style="cursor: pointer;">&nbsp;</td>
+                            }
+                            else {
+                                var statusDateTime = statusValue.Split('|');
+                                var statusSeconds = statusDateTime.Length > 1 ? Math.Round((DateTime.Now - DateTime.Parse(statusDateTime[1])).TotalSeconds) : 0;
+                                <td id="@(workcenter.WorkcenterID)_status_@(statusIndex)" class="red-bg alarm-td" data-statusDateTime="@statusValue.Split("|")[1]" style="cursor: pointer;">
+                                    <span id="statusSeconds_@(statusIndex)" class="status-seconds">
+                                        @switch (statusSeconds)
+                                        {
+                                            case >= 60 and < 3600:
+                                                // display time in minutes
+                                                @($"{Math.Floor(statusSeconds / 60)}m");
+                                                break;
+                                            case >= 3600:
+                                                // display time in hours
+                                                @($"{Math.Floor(statusSeconds / 3600)}h");
+                                                break;
+                                            default:
+                                                // display time in seconds
+                                                @($"{statusSeconds}s");
+                                                break;
+                                        }
+                                    </span>
+                                </td>
+                            }
                         }
                     }
                 }
@@ -42,3 +116,333 @@
         </tbody>
     </table>
 </div>
+
+
+<!-- modal element displaying the alarm history -->
+<div id="alarmHistoryModal" class="modal">
+    <div class="modal-content">
+        <button class="close">@translations.FirstOrDefault(t => t.Id == "Close")?.Text &times;</button>
+        <h2 id="alarmHistoryTitle" style="margin-top: 20px;">@translations.FirstOrDefault(t => t.Id == "AlarmHistory")?.Text</h2>
+        <div id="alarmHistoryContainer"
+             data-headers="@translations.FirstOrDefault(t => t.Id == "AlarmName")?.Text, @translations.FirstOrDefault(t => t.Id == "AlarmStartTime")?.Text, @translations.FirstOrDefault(t => t.Id == "AlarmEndTime")?.Text, @translations.FirstOrDefault(t => t.Id == "DurationMin")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureType")?.Text, @translations.FirstOrDefault(t => t.Id == "FailureDetails")?.Text">
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    const statusNames = @Html.Raw(Json.Serialize(statusNamesLocal));
+    const showWorkcenterName = @Html.Raw(Json.Serialize(showWorkcenterNameLocal));
+    const showOnlyWorkcentersWithAlarms = @Html.Raw(Json.Serialize(showOnlyWorkcentersWithAlarms));
+    
+    // establish connection to the hub
+    var connection = new signalR.HubConnectionBuilder().withUrl("/statusHub").build();
+
+    connection.start().catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    // get data from the hub, update status
+    connection.on("ReceiveStatusUpdate", function (workcenterID, statusIndex, newStatus) {
+        const statusValues = newStatus.split("|");
+
+        const statusElement = document.querySelector("#" + workcenterID + "_status_" + statusIndex);
+
+        if (statusValues[0] === "green") {
+            statusElement.classList.remove("red-bg");
+            statusElement.classList.add("green-bg");
+            statusElement.innerHTML = '&nbsp;'; // Remove the inner content
+            const intervalId = statusElement.getAttribute("data-interval-id");
+            if (intervalId) {
+                clearInterval(intervalId);
+                statusElement.removeAttribute("data-interval-id");
+            }
+        } else {
+            statusElement.classList.remove("green-bg");
+            statusElement.classList.add("red-bg");
+            const statusDateTime = statusValues[1];
+            statusElement.setAttribute("data-statusDateTime", statusDateTime);
+
+            let statusSecondsSpan = statusElement.querySelector(".status-seconds");
+            if (!statusSecondsSpan) {
+                statusSecondsSpan = document.createElement("span");
+                statusSecondsSpan.classList.add("status-seconds");
+                statusElement.appendChild(statusSecondsSpan);
+            }
+
+            const intervalId = setInterval(() => {
+                const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+
+                let formattedTime;
+                if (newStatusSeconds < 60) {
+                    formattedTime = `${newStatusSeconds}s`;
+                } else if (newStatusSeconds >= 60 && newStatusSeconds < 3600) {
+                    const minutes = Math.floor(newStatusSeconds / 60);
+                    formattedTime = `${minutes}m`;
+                } else {
+                    const hours = Math.floor(newStatusSeconds / 3600);
+                    formattedTime = `${hours}h`;
+                }
+
+                statusSecondsSpan.textContent = formattedTime;
+            }, 1000);
+
+            statusElement.setAttribute("data-interval-id", intervalId);
+        }
+
+        // Call filterWorkcenterRows to update the visibility of rows based on the updated status
+        filterWorkcenterRows();
+    });
+
+
+    // Alarm history modal
+    const modal = document.getElementById("alarmHistoryModal");
+    const closeButton = document.querySelector(".close");
+    const alarmHistoryContainer = document.getElementById('alarmHistoryContainer');
+    const headers = alarmHistoryContainer.getAttribute('data-headers').split(',');
+
+    closeButton.onclick = function() {
+        modal.style.display = "none";
+    };
+
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+
+    async function openAlarmHistoryModal(workcenterID, workcenterName) {
+        try {
+            const response = await fetch(`/Home/GetAlarmHistoryModal?workcenterID=${workcenterID}`);
+
+            if (response.ok) {
+                const alarmHistory = await response.json();
+
+                const alarmHistoryContainer = document.getElementById('alarmHistoryContainer');
+                alarmHistoryContainer.innerHTML = '';
+
+                const alarmHistoryTitle = document.getElementById('alarmHistoryTitle');
+                alarmHistoryTitle.textContent += `${workcenterID} ${workcenterName}`;
+
+                const table = document.createElement('table');
+                table.classList.add('alarm-history-table');
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                alarmHistory.forEach(alarm => {
+                    const row = document.createElement('tr');
+                    const startTime = new Date(alarm.alarmStartTime).toLocaleString('sv-SE');
+                    const endTime = alarm.alarmEndTime === '0001-01-01T00:00:00'
+                        ? 'N/A'
+                        : new Date(alarm.alarmEndTime).toLocaleString('sv-SE');
+
+                    const durationParts = alarm.duration.match(/(\d+):(\d+):(\d+).(\d+)/);
+                    const durationHours = parseInt(durationParts[1]);
+                    const durationMinutes = parseInt(durationParts[2]);
+                    const durationSeconds = parseInt(durationParts[3]);
+                    const totalDurationInMinutes = durationHours * 60 + durationMinutes + durationSeconds / 60;
+                    const formattedDuration = totalDurationInMinutes.toFixed(1);
+
+                    [alarm.alarmName, startTime, endTime, formattedDuration, alarm.alarmStartText1, alarm.alarmStartText2, alarm.alarmStartText3].forEach(cellValue => {
+                        const td = document.createElement('td');
+                        td.textContent = cellValue;
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
+                alarmHistoryContainer.appendChild(table);
+
+                modal.style.display = 'block';
+            } else {
+                console.error('Failed to fetch alarm history:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching alarm history:', error);
+        }
+    }
+
+    // check if all workcenter rows should be closed, replaces them with one green line
+    function checkEmptyTable() {
+        const workcenterRows = document.querySelectorAll(".alarm-table tbody tr");
+        const visibleRows = Array.from(workcenterRows).filter(row => row.style.display !== "none");
+
+        const tableBody = document.querySelector(".alarm-table tbody");
+        const emptyRow = document.getElementById("emptyRow");
+
+        if (visibleRows.length === 0 && !emptyRow) {
+            const newRow = document.createElement("tr");
+            newRow.id = "emptyRow";
+
+            const newCell = document.createElement("td");
+            newCell.colSpan = statusNames.length + 1 + (showWorkcenterName === null || showWorkcenterName.CurrentSetting === "Yes" ? 2 : 1);
+            newCell.textContent = document.getElementById("noAlarmsTranslation").textContent;
+            newCell.style.backgroundColor = "green";
+            newCell.style.borderColor = "#006400";
+            newCell.style.color = "white";
+            newCell.style.fontWeight = "bold";
+            newCell.style.borderRadius = "10px";
+            newCell.classList.add("green-bg");
+
+            newRow.appendChild(newCell);
+            tableBody.appendChild(newRow);
+        } else if (visibleRows.length > 0 && emptyRow) {
+            emptyRow.remove();
+        }
+    }
+
+    // function to filter rows to only workcenters with active alarms
+    function filterWorkcenterRows() {
+        const showActiveAlarmsOnly = document.getElementById("showActiveAlarmsOnly").checked;
+        const workcenterRows = document.querySelectorAll(".alarm-table tbody tr");
+
+        workcenterRows.forEach(row => {
+            if (showActiveAlarmsOnly) {
+                const hasActiveAlarm = Array.from(row.querySelectorAll("td")).some(td => td.classList.contains("red-bg"));
+                row.style.display = hasActiveAlarm ? "" : "none";
+            } else {
+                row.style.display = "";
+            }
+        });
+
+        checkEmptyTable(); // check if all rows should be hidden
+    }
+
+    // Function to update the "Show only workcenters with alarms in Overview?" setting in the database
+    function updateShowActiveAlarmsOnlySetting() {
+        const showActiveAlarmsOnly = document.getElementById("showActiveAlarmsOnly").checked;
+        const settingValue = showActiveAlarmsOnly ? "Yes" : "No";
+
+        // Make an AJAX POST request to the UpdateSettingFromOverview method in the SettingsController
+        fetch('/Settings/UpdateSettingFromOverview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('#updateSettingForm input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                settingID: 3,
+                settingValue: settingValue
+            })
+        });
+    }
+    
+    // Call updateShowActiveAlarmsOnlySetting on checkbox change
+    document.getElementById("showActiveAlarmsOnly").addEventListener("change", function () {
+        filterWorkcenterRows();
+        updateShowActiveAlarmsOnlySetting();
+    });
+
+
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        // function to filter rows to only workcenters with active alarms
+        filterWorkcenterRows();
+        
+        // for any cells that have already alarm switched on during page load, activate incrementing time
+        const redBgCells = document.querySelectorAll(".red-bg");
+        redBgCells.forEach(cell => {
+            const statusSecondsSpan = cell.querySelector(".status-seconds");
+            const statusDateTime = cell.getAttribute("data-statusDateTime");
+
+            setInterval(() => {
+                const newStatusSeconds = statusDateTime ? Math.round((new Date() - new Date(statusDateTime)) / 1000) : 0;
+
+                let formattedTime;
+                if (newStatusSeconds < 60) {
+                    formattedTime = `${newStatusSeconds}s`;
+                } else if (newStatusSeconds >= 60 && newStatusSeconds < 3600) {
+                    const minutes = Math.floor(newStatusSeconds / 60);
+                    formattedTime = `${minutes}m`;
+                } else {
+                    const hours = Math.floor(newStatusSeconds / 3600);
+                    formattedTime = `${hours}h`;
+                }
+
+                statusSecondsSpan.textContent = formattedTime;
+            }, 1000);
+        });
+    });
+
+
+</script>
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: #000000 !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60%;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px #000000, 0 1px 3px #000000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    .close {
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+    }
+
+    .close:hover,
+    .close:focus {
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+
+
+.alarm-history-table {
+             width: 100%;
+             border-collapse: collapse;
+         }
+
+    .alarm-history-table th {
+        background-color: #D6EFFF !important;
+        color: #1C2331 !important;
+        border: 1px solid #1C2331 !important;
+        font-weight: bold;
+        text-align: center; /* Add this line to center the header text */
+    }
+
+    .alarm-history-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .alarm-history-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+</style>
+

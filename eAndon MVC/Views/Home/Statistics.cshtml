@@ -1,0 +1,610 @@
+﻿@inject MyDbContext dbContext
+
+@{
+    ViewData["Title"] = "Alarm Statistics";
+
+    var language = dbContext.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+    var translations = dbContext.Localization!
+        .Select(l => new
+        {
+            l.Id,
+            Text = language == "Translation" ? l.Translation : l.English
+        })
+        .ToList();
+}
+
+<span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "AlarmStatistics")?.Text</span>
+<span class="hidden" id="NoOfAlarmsTranslation">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</span>
+
+<form asp-action="Statistics" method="get" class="filter-form">
+    <div>
+        <label for="startDate">@translations.FirstOrDefault(t => t.Id == "AlarmStartDate")?.Text:</label>
+        <input type="date" name="startDate" value="@Context.Request.Query["startDate"]">
+    </div>
+    <div>
+        <label for="endDate">@translations.FirstOrDefault(t => t.Id == "AlarmEndDate")?.Text:</label>
+        <input type="date" name="endDate" value="@(Context.Request.Query["endDate"].Count > 0 ? Context.Request.Query["endDate"] : DateTime.Now.ToString("yyyy-MM-dd"))">
+    </div>
+    <div>
+        <label for="workcenterID">@translations.FirstOrDefault(t => t.Id == "Workcenter")?.Text:</label>
+        <select name="workcenterID">
+            <option value="">@translations.FirstOrDefault(t => t.Id == "All")?.Text</option>
+            @foreach (var workcenter in ViewBag.Workcenters)
+            {
+                <option value="@workcenter.WorkcenterID" selected="@(Context.Request.Query["workcenterID"] == workcenter.WorkcenterID)">@workcenter.WorkcenterID @workcenter.WorkcenterName</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">@translations.FirstOrDefault(t => t.Id == "ShowStatistics")?.Text</button>
+</form>
+
+<p>&nbsp;</p>
+
+<table class="table" style="border: 2px solid #1C2331;">
+    <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+        <tr>
+            <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NoOfFinishedAlarms")?.Text</th>
+            <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "MTTR")?.Text</th>
+            <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "MTBF")?.Text</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="border: 1px solid #1C2331;">@ViewBag.TotalAlarms</td>
+            <td style="border: 1px solid #1C2331;">@FormatAvgDuration(ViewBag.MTTR)</td>
+            <td style="border: 1px solid #1C2331;">@FormatAvgDuration(ViewBag.MTBF)</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="display: flex;">
+    <div class="table-container">
+        <table class="table" id="alarmDetails" style="border: 2px solid #1C2331;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+            <tr>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "Workcenter")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "PercentageOfTotal")?.Text</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var workcenter in ((List<WorkcenterStatistic>)ViewBag.WorkcenterStatistics).OrderByDescending(w => w.NumberOfAlarms))
+            {
+                <tr>
+                    <td style="border: 1px solid #1C2331;">
+                        <a href="javascript:void(0);" class="workcenter-link" data-workcenter-id="@workcenter.WorkcenterID" data-workcenter-name="@workcenter.WorkcenterName" style="text-decoration: none; color: inherit;" onclick="showWorkcenterDetails(this)">
+                            @workcenter.WorkcenterID @workcenter.WorkcenterName
+                            <i class="fa fa-info-circle fa-lg"></i>
+                        </a>
+                    </td>
+                    <td style="border: 1px solid #1C2331;">@workcenter.NumberOfAlarms</td>
+                    <td style="border: 1px solid #1C2331;">@(ViewBag.TotalAlarms > 0 ? (workcenter.NumberOfAlarms * 100.0 / ViewBag.TotalAlarms).ToString("N2") : "0")%</td>
+                </tr>
+            }
+
+            </tbody>
+        </table>
+    </div>
+
+    <div style="width: 50%; margin-left: 30px;">
+        <canvas id="workcenterStatisticsChart"></canvas>
+    </div>
+</div>
+
+
+<!-- Hidden tables showing details for 1 workcenter when it's clicked' -->
+<div style="display: flex; justify-content: space-between;">
+    <!-- First table and chart container -->
+    <div class="table-chart-container">
+        <div class="table-container hidden-table" id="workcenterDetails" style="display: none;">
+            <table class="table" style="border: 2px solid #1C2331;">
+                <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr style="color: #D6EFFF; background-color: #1C2331;">
+                        <th colspan="3" style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmTypesForWorkcenter")?.Text<span class="workcenterName"></span></th>
+                </tr>
+                <tr>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmName")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "PercentageOfTotal")?.Text</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Alarm type statistics table rows for the clicked workcenter will be shown here -->
+                </tbody>
+            </table>
+        </div>
+        <div style="width: 100%; margin-top: 10px; margin-bottom: 30px;">
+            <canvas id="workcenterDetailsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Second table and chart container -->
+    <div class="table-chart-container">
+        <div class="table-container hidden-table" id="workcenterDetailsByFailureLocation" style="display: none;">
+            <table class="table" style="border: 2px solid #1C2331;">
+                <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr style="color: #D6EFFF; background-color: #1C2331;">
+                        <th colspan="3" style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureLocationForWorkcenter")?.Text<span class="workcenterName"></span></th>
+                </tr>
+                <tr>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureLocation")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "PercentageOfTotal")?.Text</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Alarm type statistics table rows for the clicked workcenter will be shown here -->
+                </tbody>
+            </table>
+        </div>
+        <div style="width: 100%; margin-top: 30px;">
+            <canvas id="workcenterDetailsChartByFailureLocation"></canvas>
+        </div>
+    </div>
+
+    <!-- Third table and chart container -->
+    <div class="table-chart-container">
+        <div class="table-container hidden-table" id="workcenterDetailsByFailureType" style="display: none;">
+            <table class="table" style="border: 2px solid #1C2331;">
+                <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+                <tr style="color: #D6EFFF; background-color: #1C2331;">
+                        <th colspan="3" style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureTypesForworkcenter")?.Text<span class="workcenterName"></span></th>
+                </tr>
+                <tr>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "FailureType")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</th>
+                        <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "PercentageOfTotal")?.Text</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Alarm type statistics table rows for the clicked workcenter will be shown here -->
+                </tbody>
+            </table>
+        </div>
+        <div style="width: 100%; margin-top: 30px;">
+            <canvas id="workcenterDetailsChartByFailureType"></canvas>
+        </div>
+    </div>
+</div>
+
+
+
+<div style="display: flex;">
+    <div class="table-container">
+        <table class="table" id="alarmTypes" style="border: 2px solid #1C2331;">
+            <thead style="background-color: #D6EFFF; color: #1C2331; border: 2px solid #1C2331;">
+            <tr>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "AlarmName")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "NumberOfAlarms")?.Text</th>
+                    <th style="border: 1px solid #1C2331; text-align: center;">@translations.FirstOrDefault(t => t.Id == "PercentageOfTotal")?.Text</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var alarmNameStatistic in ((List<AlarmNameStatistic>)ViewBag.AlarmNameStatistics).OrderByDescending(a => a.NumberOfAlarms))
+            {
+                <tr>
+                    <td style="border: 1px solid #1C2331;">@alarmNameStatistic.AlarmName</td>
+                    <td style="border: 1px solid #1C2331;">@alarmNameStatistic.NumberOfAlarms</td>
+                    <td style="border: 1px solid #1C2331;">@(ViewBag.TotalAlarms > 0 ? (alarmNameStatistic.NumberOfAlarms * 100.0 / ViewBag.TotalAlarms).ToString("N2") : "0")%</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div style="width: 50%; margin-left: 30px;">
+        <canvas id="alarmNameStatisticsChart"></canvas>
+    </div>
+</div>
+
+@functions {
+    static string FormatAvgDuration(double durationInSeconds)
+    {
+        switch (durationInSeconds)
+        {
+            case < 60:
+                return $"{durationInSeconds:N1} s";
+            // 60 minutes * 60 seconds
+            case < 3600:
+            {
+                var durationInMinutes = durationInSeconds / 60;
+                return $"{durationInMinutes:N1} min";
+            }
+            default:
+            {
+                var durationInHours = durationInSeconds / 3600;
+                return $"{durationInHours:N1} h";
+            }
+        }
+    }
+}
+
+@section Scripts {
+    <script>
+        @{
+            var workcenterIDsArray = new List<string>();
+            var numberOfAlarmsArray = new List<int>();
+
+            var sortedWorkcenterStatistics = ((List<WorkcenterStatistic>)ViewBag.WorkcenterStatistics).OrderByDescending(w => w.NumberOfAlarms);
+
+            foreach (var w in sortedWorkcenterStatistics)
+            {
+                workcenterIDsArray.Add(w.WorkcenterID!);
+                numberOfAlarmsArray.Add(w.NumberOfAlarms);
+            }
+        }
+
+        var workcenterIDs = @Html.Raw(Json.Serialize(workcenterIDsArray));
+        var numberOfAlarms = @Html.Raw(Json.Serialize(numberOfAlarmsArray));
+
+        function generateWorkcenterStatisticsChart() {
+            const ctx = document.getElementById('workcenterStatisticsChart').getContext('2d');
+            const chart = new Chart(ctx,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: workcenterIDs,
+                        datasets: [
+                            {
+                                label: document.getElementById("NoOfAlarmsTranslation").textContent,
+                                data: numberOfAlarms,
+                                backgroundColor: 'rgba(28, 35, 49, 0.2)',
+                                borderColor: 'rgba(28, 35, 49, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+        }
+
+        let workcenterDetailsChart;
+
+        function generateWorkcenterDetailsChart(alarmNames, numberOfAlarmsPerAlarm) {
+            var ctx = document.getElementById('workcenterDetailsChart').getContext('2d');
+
+            // Destroy the previous chart if it exists
+            if (workcenterDetailsChart) {
+                workcenterDetailsChart.destroy();
+            }
+
+            // Create a new chart with updated data
+            workcenterDetailsChart = new Chart(ctx,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: alarmNames,
+                        datasets: [
+                            {
+                                label: document.getElementById("NoOfAlarmsTranslation").textContent,
+                                data: numberOfAlarmsPerAlarm,
+                                backgroundColor: 'rgba(28, 35, 149, 0.2)',
+                                borderColor: 'rgba(28, 35, 149, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+        }
+
+        let workcenterDetailsChartByFailureLocation;
+
+        function generateWorkcenterDetailsChartByFailureLocation(alarmLocations, numberOfAlarmsPerAlarm) {
+            var ctx2 = document.getElementById('workcenterDetailsChartByFailureLocation').getContext('2d');
+
+            // Destroy the previous chart if it exists
+            if (workcenterDetailsChartByFailureLocation) {
+                workcenterDetailsChartByFailureLocation.destroy();
+            }
+
+            // Create a new chart with updated data
+            workcenterDetailsChartByFailureLocation = new Chart(ctx2,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: alarmLocations,
+                        datasets: [
+                            {
+                                label: document.getElementById("NoOfAlarmsTranslation").textContent,
+                                data: numberOfAlarmsPerAlarm,
+                                backgroundColor: 'rgba(28, 35, 149, 0.2)',
+                                borderColor: 'rgba(28, 35, 149, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+        }
+
+
+        let workcenterDetailsChartByFailureType;
+
+        function generateWorkcenterDetailsChartByFailureType(alarmTypes, numberOfAlarmsPerAlarm) {
+            var ctx3 = document.getElementById('workcenterDetailsChartByFailureType').getContext('2d');
+
+            // Destroy the previous chart if it exists
+            if (workcenterDetailsChartByFailureType) {
+                workcenterDetailsChartByFailureType.destroy();
+            }
+
+            // Create a new chart with updated data
+            workcenterDetailsChartByFailureType = new Chart(ctx3,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: alarmTypes,
+                        datasets: [
+                            {
+                                label: document.getElementById("NoOfAlarmsTranslation").textContent,
+                                data: numberOfAlarmsPerAlarm,
+                                backgroundColor: 'rgba(28, 35, 149, 0.2)',
+                                borderColor: 'rgba(28, 35, 149, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+        }
+
+
+
+        @{
+            var alarmNamesArray = new List<string>();
+            var alarmNumberOfAlarmsArray = new List<int>();
+
+            var sortedAlarmNameStatistics = ((List<AlarmNameStatistic>)ViewBag.AlarmNameStatistics).OrderByDescending(a => a.NumberOfAlarms);
+
+            foreach (var a in sortedAlarmNameStatistics)
+            {
+                if (a.AlarmName != null)
+                {
+                    alarmNamesArray.Add(a.AlarmName);
+                }
+                alarmNumberOfAlarmsArray.Add(a.NumberOfAlarms);
+            }
+        }
+
+        var alarmNames = @Html.Raw(Json.Serialize(alarmNamesArray));
+        var alarmNumberOfAlarms = @Html.Raw(Json.Serialize(alarmNumberOfAlarmsArray));
+
+        function generateAlarmStatisticsChart() {
+            const ctx = document.getElementById('alarmNameStatisticsChart').getContext('2d');
+            const chart = new Chart(ctx,
+                {
+                    type: 'bar',
+                    data: {
+                        labels: alarmNames,
+                        datasets: [
+                            {
+                                label: document.getElementById("NoOfAlarmsTranslation").textContent,
+                                data: alarmNumberOfAlarms,
+                                backgroundColor: 'rgba(28, 35, 49, 0.2)',
+                                borderColor: 'rgba(28, 35, 49, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+        }
+
+        async function showWorkcenterDetails(element) { // details about alarm types for a particular workcenter
+            const workcenterID = element.dataset.workcenterId;
+            const workcenterName = element.dataset.workcenterName;
+
+            // Update workcenter name in the 3 table headers
+            const workcenterNameElements = document.querySelectorAll('.workcenterName');
+            workcenterNameElements.forEach(element => {
+                element.innerText = workcenterID + " " + workcenterName;
+            });
+
+            // Get the startDate and endDate from the form inputs
+            const startDateInput = document.querySelector('input[name="startDate"]');
+            const endDateInput = document.querySelector('input[name="endDate"]');
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            const queryString = new URLSearchParams({ startDate, endDate, workcenterID }).toString();
+            const response = await fetch(`/Home/GetWorkcenterAlarmTypeStats?${queryString}`);
+
+            if (!response.ok) {
+                console.error('Failed to fetch workcenter alarm type stats.');
+                return;
+            }
+
+            // AlarmName table
+            const result = await response.json();
+            var alarmTypeStats = result.alarmNameStatistics; 
+            var detailsTable = document.getElementById('workcenterDetails');
+            var detailsChart = document.getElementById('workcenterDetailsChart');
+            var tbody = detailsTable.querySelector('tbody');
+
+            // Clear previous table content
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+
+            // Populate table body with new data
+            alarmTypeStats.forEach(stat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td style="border: 1px solid #1C2331;">${stat.alarmName}</td>
+                <td style="border: 1px solid #1C2331;">${stat.numberOfAlarms}</td>
+                <td style="border: 1px solid #1C2331;">${stat.percentageOfTotal.toFixed(2)}%</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            // show the table and chart
+            detailsTable.style.display = 'block';
+            detailsChart.style.display = 'block';
+
+            // Generate data for the chart
+            var alarmNames = alarmTypeStats.map(stat => stat.alarmName);
+            var numberOfAlarmsPerAlarm = alarmTypeStats.map(stat => stat.numberOfAlarms);
+
+            // Generate the workcenterDetailsChart
+            generateWorkcenterDetailsChart(alarmNames, numberOfAlarmsPerAlarm);
+
+
+            // AlarmLocation table
+            alarmTypeStats = result.alarmLocationStatistics;
+            detailsTable = document.getElementById('workcenterDetailsByFailureLocation');
+            detailsChart = document.getElementById('workcenterDetailsChartByFailureLocation');
+            tbody = detailsTable.querySelector('tbody');
+
+            // Clear previous table content
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+
+            // Populate table body with new data
+            alarmTypeStats.forEach(stat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td style="border: 1px solid #1C2331;">${stat.alarmLocation}</td>
+                <td style="border: 1px solid #1C2331;">${stat.numberOfAlarms}</td>
+                <td style="border: 1px solid #1C2331;">${stat.percentageOfTotal.toFixed(2)}%</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            // show the table and chart
+            detailsTable.style.display = 'block';
+            detailsChart.style.display = 'block';
+
+            // Generate data for the chart
+            alarmLocations = alarmTypeStats.map(stat => stat.alarmLocation);
+            numberOfAlarmsPerAlarm = alarmTypeStats.map(stat => stat.numberOfAlarms);
+            generateWorkcenterDetailsChartByFailureLocation(alarmLocations, numberOfAlarmsPerAlarm);
+
+
+
+            // AlarmType table
+            alarmTypeStats = result.alarmTypeStatistics;
+            detailsTable = document.getElementById('workcenterDetailsByFailureType');
+            detailsChart = document.getElementById('workcenterDetailsChartByFailureType');
+            tbody = detailsTable.querySelector('tbody');
+
+            // Clear previous table content
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+
+            // Populate table body with new data
+            alarmTypeStats.forEach(stat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td style="border: 1px solid #1C2331;">${stat.alarmType}</td>
+                <td style="border: 1px solid #1C2331;">${stat.numberOfAlarms}</td>
+                <td style="border: 1px solid #1C2331;">${stat.percentageOfTotal.toFixed(2)}%</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            // show the table and chart
+            detailsTable.style.display = 'block';
+            detailsChart.style.display = 'block';
+
+            // Generate data for the chart
+            alarmTypes = alarmTypeStats.map(stat => stat.alarmType);
+            numberOfAlarmsPerAlarm = alarmTypeStats.map(stat => stat.numberOfAlarms);
+            generateWorkcenterDetailsChartByFailureType(alarmTypes, numberOfAlarmsPerAlarm);
+
+        }
+
+
+        document.addEventListener('DOMContentLoaded',
+            function () {
+                generateWorkcenterStatisticsChart();
+                generateAlarmStatisticsChart();
+            });
+    </script>
+}
+
+
+
+
+<style>
+    .filter-form {
+        background-color: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 10px;
+        margin-top: 15px !important; /* Add top margin */
+        margin-bottom: 15px !important; /* Modify bottom margin */
+        border-radius: 5px;
+    }
+
+        .filter-form div {
+            margin: 0 10px;
+        }
+
+        .filter-form label {
+            margin-right: 5px;
+        }
+
+    form label {
+        color: black;
+        font-weight: bold;
+    }
+
+    .table-container {
+        width: 50%; 
+    }
+
+        .table-container .table {
+            width: 100%;
+        }
+
+    .hidden-table {
+        margin-bottom: 0;
+    }
+
+    .table-chart-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0 10px;
+    }
+  
+    .table-container {
+        width: 100%;
+    }
+
+</style>

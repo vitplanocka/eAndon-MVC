@@ -1,8 +1,21 @@
-﻿@{
+﻿@inject MyDbContext dbContext
+@{
     ViewData["Title"] = "What is Andon?";
+
+        var language = dbContext.Settings!.Where(s => s.SettingName == "Language").Select(s => s.CurrentSetting).FirstOrDefault();
+        var translations = dbContext.Localization
+            .Select(l => new
+            {
+                l.Id,
+                Text = language == "Translation" ? l.Translation : l.English
+            })
+            .ToList();
 }
+
+
+
 <div class="container"> 
-    <h1 class="display-4">What is Andon?</h1>
+    <span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "WhatIsAndon")?.Text</span>
     <div class="row">
         <div class="col-md-6">
 
@@ -11,7 +24,7 @@
             <p>When a manufacturing line is stopped, Andon lights are turned on to signal the issue, which helps identify the specific location of the problem. This reduces waste, improves quality, and helps companies become more efficient. By implementing Andon, companies have experienced benefits such as reduced downtime, increased productivity, and improved communication among employees.</p>
         </div>
         <div class="col-md-6">
-            <img src="~/Images/pkmjerei.bmp" alt="Andon illustration"/>
+            <img src="~/Images/pkmjerei.jpeg" height="300" alt="Andon principle illustration" />
         </div>
     </div>
 </div>

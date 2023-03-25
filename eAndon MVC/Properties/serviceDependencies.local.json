@@ -1,13 +1,3 @@
 {
-  "dependencies": {
-    "secrets1": {
-      "type": "secrets.user"
-    },
-    "mssql1": {
-      "secretStore": "LocalSecretsFile",
-      "type": "mssql.local",
-      "connectionId": "ConnectionStrings:eAndonDB",
-      "dynamicId": null
-    }
-  }
+  "dependencies": {}
 }

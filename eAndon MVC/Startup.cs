@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using eAndon_MVC.Hubs;
+using Microsoft.EntityFrameworkCore;
 
 namespace eAndon_MVC
 {
@@ -17,6 +18,8 @@ namespace eAndon_MVC
                 options.UseSqlServer(Configuration.GetConnectionString("MyDbContext")));
 
             services.AddControllersWithViews();
+
+            services.AddSignalR();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -37,6 +40,12 @@ namespace eAndon_MVC
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapHub<StatusHub>("/statusHub");
+            });
 
             app.UseEndpoints(endpoints =>
             {

@@ -14,6 +14,8 @@ public class MyDbContext : DbContext
 
     public DbSet<Workcenter> WorkcenterList { get; set; }
     public DbSet<StatusDefinition> StatusDefinition { get; set; }
-    public DbSet<WorkcenterStatusLog> WorkcenterStatusLog { get; set; }
+    public DbSet<AndonLog> AndonLog { get; set; }
+    public DbSet<Localization> Localization { get; set; }
+    public DbSet<Settings> Settings { get; set; }
 }
 
