@@ -24,11 +24,11 @@ This system can be accessed from a web browser or mobile device, and it can be r
 ## What is Andon?
 Andon is a popular tool used in Lean Manufacturing. It was originally pioneered by Toyota as a method to visualize problems, help create employee's awareness about targets and non-standard conditions, and promote leadership behavior. It is linked with the Jidōka methodology in the Toyota Production system that encourages operators to recognize a deviation from the standard and stop work and call supervisors or support staff who can help solve the deviation.  Most Japanese factories display a variation on the sign「止める・呼ぶ・待つ」- Stop-Call-Wait that reminds operators that this is the expected behavior.
 
-<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/pkmjerei.jpeg" alt="Stop-Call-Wait sign">
+<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/pkmjerei.jpeg" alt="Stop-Call-Wait sign"  width="300">
 
 Originally, the operator would pull the Andon Cord, which was a rope located above the line, but Andon can take many forms. It can be activated by an operator pulling a cord or pushing a button, or it can be automatically activated by equipment when a problem is detected.
 
-<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/Andon_cord2.png" alt="Operator pulling an Andon Cord">
+<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/Andon_cord2.png" alt="Operator pulling an Andon Cord"  width="400">
 
 Whether used because of part shortage, equipment malfunction, or a safety concern, the point of Andon in Lean manufacturing is to stop work so that the team can gather together, perform a real-time root cause analysis, and quickly apply a solution. Once the problem is resolved and work continues, the occurrence is logged as part of a continuous improvement system.
 
@@ -67,31 +67,20 @@ In order to customize the setup for the specific use case, access the Settings p
 *     Adjusting the app's text content or translating it to another language for localization purposes
 
 
-
-
 ## Instructions
-1. Start with applications Andon_dashboard.exe, Terminal01.exe ~ 04.exe, file priority_workstations.txt and sub-folders /Assets, /Data and /Logs in one folder to which the terminals have read/write access and the computer displaying Andon_dashboard has at least read access.
 
-2. On each terminal, run the appropriate Terminal0#.exe file. On the computer(s) displaying the visualization, run the Andon_dashboard.exe file.
+When a problem occurs at a workstation, click the green field corresponding to the incident in the relevant Terminal screen. If specific details are available for the alarm, you can input additional information, such as the location of the failure, the type of failure, or any other pertinent details in the form of free text. Once entered, the green field will change to red, and a timer will begin to count the seconds or minutes since the alarm was activated.
 
-3. When alarm occurs on some workstation, on the relevant terminal click the green field in Terminal0#.exe corresponding to the workstation and type of alarm.
-The green field will turn yellow or red (based on settings) and the field will start to show a counter with amount of minutes since the alarm was triggered.
+This information will also be immediately reflected on the Overview visualization.
 
-<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/term02.png" alt="terminal02 showing triggering of an alarm" width="700">
+After resolving the alarm at the workstation, click the red field in the Terminal to reset the alarm status back to green.
 
-The same information will be displayed immediately on the Andon_dashboard visualization.
+<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/Overview.png" alt="Overview and terminal application displaying triggered alarms" width="800"> 
 
-<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/Andon_dashboard.png" alt="Andon_dashboard displaying triggered alarms" width="800">
+Logs of triggered alarms can be found in the Logs tab, while Pareto diagrams of the alarms are available in the Statistics page.
 
-4. When the alarm at the workstation is resolved, click again the field in Terminal0#.exe so that the status of the alarm returns to green.
+<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/Statistics.png" alt="starting an alarm" width="700" style="border: 2px solid black;" />
 
-5. Logs of the triggered alarms are saved in the /Logs folder in the alarmlog_terminal0#.txt files.
-
-6. History of the alarms can be displayed in a separate window by clicking the workstation number.
-
-<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/Alarm_overview.png" alt="Alarm overview" width="800">
-
-7. Both the dashboard and the terminal programs have an information text box that can be used to display current information for operators (e.g. the target and result from previous day and plan for the current production day). The text displayed in this text box is read out from the text file InfoTextForOperators.rtf where it can be manually or automatically adjusted as needed.
 
 ## License
 This project is licensed under the <a href="https://github.com/vitplanocka/eAndon/blob/master/LICENSE">MIT license</a>
