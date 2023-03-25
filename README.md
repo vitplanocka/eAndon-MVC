@@ -59,7 +59,7 @@ There is one or more dashboards (TV display in a production hall, laptop compute
 ## Installation
 
 The app stores the settings and alarm data in an SQL database.
-In order to set up the SQL tables, you can use the scripts from the file https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/SQL_tables.txt
+In order to set up the SQL tables, you can use the scripts from the <a href="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/SQL_tables.txt">SQL_tables<a> file. 
 
 In order to customize the setup for the specific use case, access the Settings page in the app that allows you the following customization:
 *     Adding, removing, or renaming terminals to accurately represent your existing workstations
