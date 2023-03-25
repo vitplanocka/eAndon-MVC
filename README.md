@@ -79,7 +79,7 @@ After resolving the alarm at the workstation, click the red field in the Termina
 
 Logs of triggered alarms can be found in the Logs tab, while Pareto diagrams of the alarms are available in the Statistics page.
 
-<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/Statistics.png" alt="starting an alarm" width="700" style="border: 2px solid black;" />
+<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/Statistics.png" alt="Alarm statistics" width="700" style="border: 2px solid black;" />
 
 
 ## License
