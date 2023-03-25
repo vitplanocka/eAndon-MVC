@@ -2,8 +2,8 @@
 
 Implementation of a simple electronic/software Andon system to be used in a production company (factory) to communicate and visualize problems occurring at workstations or production lines.
 
-The program can be configured to display a range of different problems (technical issues, quality issues, material supply issues, …) and can be also configured to display various configurations of workstations and display screens.
-The program runs on Windows OS and can be used in a situation where there are computer terminals near the production workstations on the shopfloor that can be used to trigger alarms when problems occur at the workstations.
+The app can be configured to display a range of different problems (technical issues, quality issues, material supply issues, …) and can be also configured to display various configurations of workstations and display screens.
+The app can be run on intranet or internet from a browser or mobile phone and can be used in a situation where there are computer terminals near the production workstations on the shopfloor that can be used to trigger alarms when problems occur at the workstations.
 
 * [What is Andon?](#What-is-Andon)
 
@@ -17,7 +17,7 @@ The program runs on Windows OS and can be used in a situation where there are co
 
 * [Author](#Author)
 
-<img src="https://github.com/vitplanocka/eAndon/blob/master/Screenshots/eAndon_overview.png" alt="Andon_dashboard and terminal application displaying triggered alarms" width="800">
+<img src="https://github.com/vitplanocka/eAndon-MVC/blob/master/eAndon%20MVC/wwwroot/Images/Overview.png" alt="Overview and terminal application displaying triggered alarms" width="800">
 
 ## What is Andon?
 Andon is a popular tool used in Lean Manufacturing. It was originally pioneered by Toyota as a method to visualize problems, help create employee's awareness about targets and non-standard conditions, and promote leadership behavior. It is linked with the Jidōka methodology in the Toyota Production system that encourages operators to recognize a deviation from the standard and stop work and call supervisors or support staff who can help solve the deviation.  Most Japanese factories display a variation on the sign「止める・呼ぶ・待つ」- Stop-Call-Wait that reminds operators that this is the expected behavior.
