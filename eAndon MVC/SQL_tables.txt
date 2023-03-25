@@ -1,0 +1,264 @@
+---------------------------------------------------------------------------------------------
+-- WorkcenterList
+---------------------------------------------------------------------------------------------
+
+
+CREATE TABLE [dbo].[WorkcenterList] (
+    [WorkcenterRow]  INT           NOT NULL,
+    [WorkcenterID]   VARCHAR (50)  NOT NULL,
+    [WorkcenterName] VARCHAR (50)  NOT NULL,
+    [Status1]        VARCHAR (MAX) NULL,
+    [Status2]        VARCHAR (MAX) NULL,
+    [Status3]        VARCHAR (MAX) NULL,
+    [Status4]        VARCHAR (MAX) NULL,
+    [Status5]        VARCHAR (MAX) NULL,
+    CONSTRAINT [PK_dbo.WorkcenterList3] PRIMARY KEY CLUSTERED ([WorkcenterRow] ASC),
+    CONSTRAINT [UQ_WorkcenterID] UNIQUE NONCLUSTERED ([WorkcenterID] ASC)
+);
+
+
+USE [eAndonDB]
+
+GO
+
+SET IDENTITY_INSERT WorkcenterList ON
+
+INSERT INTO [dbo].[WorkcenterList]
+           ([WorkcenterRow]
+           ,[WorkcenterID]
+           ,[WorkcenterName]
+           ,[Status1]
+           ,[Status2]
+           ,[Status3]
+           ,[Status4]
+           ,[Status5])
+
+     VALUES
+           (1, 'A-003', 'Mixing Station', 'green', 'green', 'green', 'green', 'green'),
+           (2, 'A-012', 'Heating Chamber', 'green', 'green', 'green', 'green', 'green'),
+           (3, 'B-015', 'Curing Area', 'green', 'green', 'green', 'green', 'green'),
+           (4, 'B-019', 'Assembly', 'green', 'green', 'green', 'green', 'green'),
+           (5, 'C-020', 'Inspection & Packing', 'green', 'green', 'green', 'green', 'green')
+GO
+
+SET IDENTITY_INSERT WorkcenterList OFF
+
+
+
+
+---------------------------------------------------------------------------------------------
+-- StatusDefinition
+---------------------------------------------------------------------------------------------
+
+CREATE TABLE [dbo].[StatusDefinition] (
+    [StatusRow]                INT            NOT NULL,
+    [StatusName]               NVARCHAR (20)  NOT NULL,
+    [StatusEnabled]            BIT            NOT NULL,
+    [StatusDetailsEnabled]     INT            NOT NULL,
+    [IconName]                 NVARCHAR (50)  NULL,
+    [AlarmStartText1Structure] NVARCHAR (MAX) NULL,
+    [AlarmStartText2Structure] NVARCHAR (MAX) NULL,
+    [AlarmStartText3Structure] NVARCHAR (MAX) NULL,
+    [AlarmEndText1Structure]   NVARCHAR (MAX) NULL,
+    [AlarmEndText2Structure]   NVARCHAR (MAX) NULL,
+    [AlarmEndText3Structure]   NVARCHAR (MAX) NULL,
+    [AlarmEndText4Structure]   NVARCHAR (MAX) NULL,
+    CONSTRAINT [PK_dbo.StatusDefinition2] PRIMARY KEY CLUSTERED ([StatusRow] ASC)
+);
+
+
+
+
+USE [eAndonDB]
+
+GO
+
+
+INSERT INTO [dbo].[StatusDefinition]
+           ([StatusRow]
+           ,[StatusName]
+           ,[StatusEnabled]
+           ,[StatusDetailsEnabled]
+           ,[IconName]
+           ,[AlarmStartText1Structure]
+           ,[AlarmStartText2Structure]
+           ,[AlarmStartText3Structure]
+           ,[AlarmEndText1Structure]
+           ,[AlarmEndText2Structure]
+           ,[AlarmEndText3Structure]
+           ,[AlarmEndText4Structure])
+     VALUES
+
+           (1, 'Machine trouble', 1, 1, 'fa fa-cogs', 'ON|Loading|Robot|Pressing|Machining|Assembly|Welding|Soldering|Cutting|Injection Molding|Extrusion|Painting|Coating|Laser Cutting|Testing|Quality Control|Material Handling|Packaging|Heat Treating|Casting|Forming|Grinding|Deburring|Polishing', 'ON|Mechanical failure|Electrical failure|Software failure', 'ON|', 'OFF', 'OFF', 'OFF', 'OFF'),
+           (2, 'Quality issue', 1, 0, 'fa fa-search', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF'),
+           (3, 'Material shortage', 1, 1, 'fa fa-bars', 'OFF', 'OFF', 'ON', 'OFF', 'OFF', 'OFF', 'OFF'),
+           (4, 'Process abnormality', 1, 0, 'fa fa-thermometer-full', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF'),
+           (5, 'Teamleader needed', 1, 0, 'fa fa-street-view', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF')
+
+GO
+
+
+
+---------------------------------------------------------------------------------------------
+-- Settings
+---------------------------------------------------------------------------------------------
+
+CREATE TABLE [dbo].[Settings] (
+    [SettingID]        INT            NOT NULL,
+    [SettingName]      NVARCHAR (50)  NULL,
+    [CurrentSetting]   NVARCHAR (MAX) NULL,
+    [PossibleSettings] NVARCHAR (MAX) NULL,
+    [DefaultSetting]   NVARCHAR (MAX) NULL,
+    PRIMARY KEY CLUSTERED ([SettingID] ASC)
+);
+
+
+USE [eAndonDB]
+
+GO
+
+
+INSERT INTO [dbo].[Settings]
+           ([SettingID]
+           ,[SettingName]
+           ,[CurrentSetting]
+           ,[PossibleSettings]
+           ,[DefaultSetting])
+     VALUES
+           (1, 'Language', 'English', 'English|Translation', 'English'),
+           (2, 'Show workcenter name?', 'Yes', 'Yes|No', 'Yes'),
+           (3, 'Show only workcenters with alarms in Overivew?', 'No', 'Yes|No', 'No')
+
+
+GO
+
+
+
+---------------------------------------------------------------------------------------------
+-- Localization
+---------------------------------------------------------------------------------------------
+
+CREATE TABLE [dbo].[Localization] (
+    [Id]          NVARCHAR (50)  NOT NULL,
+    [English]     NVARCHAR (MAX) NULL,
+    [Translation] NVARCHAR (MAX) NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+USE [eAndonDB]
+
+GO
+
+ 
+
+INSERT INTO [dbo].[Localization]
+           ([Id]
+           ,[English]
+           ,[Translation])
+
+     VALUES
+('AddWorkcenter','Add workcenter','Přidej pracoviště'),
+('AlarmEndDate','Ending Date','Koncové datum'),
+('AlarmEndTime','Alarm End','Konec alarmu'),
+('AlarmHistory','Alarm History for workcenter ','Historie alarmů na pracovišti '),
+('AlarmLog','Alarm Log','Záznamy'),
+('AlarmName','Alarm Type','Typ alarmu'),
+('AlarmOverview','Alarm Overview','Přehled alarmů'),
+('AlarmRow','Alarm Row','Pořadí alarmu'),
+('AlarmStartDate','Starting Date','Počáteční datum'),
+('AlarmStartDetails','Enter details to start the alarm','Zadej detaily pro spuštění alarmu'),
+('AlarmStartTime','Alarm Start','Začátek alarmu'),
+('AlarmStatistics','Alarm Statistics','Statistiky alarmů'),
+('AlarmTypeEnabled','Alarm Type Enabled','Typ alarmu aktivní'),
+('AlarmTypeIcon','Alarm Type Icon','Ikona typu alarmu'),
+('AlarmTypeName','Alarm Type Name','Jméno typu alarmu'),
+('ALARMTYPES','ALARM TYPES','TYPY ALARMŮ'),
+('AlarmTypesForWorkcenter','Alarm types for Workcenter ','Typy alarmů pro pracoviště '),
+('All','All','Vše'),
+('Cancel','Cancel','Zrušit'),
+('ChooseIcon','Choose Icon','Vyber ikonu'),
+('Close','Close','Zavřít'),
+('ConfirmAlarm','Confirm Alarm','Potvrdit alarm'),
+('CurrentValue','Current value','Současná hodnota'),
+('DefaultText','Default text (English)','Standardní text (angličtina)'),
+('DefineAlarmStartDetails','Define alarm start details - ','Definuj detaily pro začátek alarmu - '),
+('DeleteWorkcenter','Delete workcenter','Smaž pracovíště'),
+('DetailEnabled','Detail enabled','Detail aktivní'),
+('DetailsFree','Details (free text field)','Detaily (volné textové pole)'),
+('DetailsOptional','Details (optional)','Detaily (nepovinné)'),
+('DurationMin','Alarm Duration (min)','Trvání alarmu (min)'),
+('Enabled','Enabled','Aktivní'),
+('EnabledForEnd','Enabled for alarm end','Zapnuty pro konec alarmů'),
+('EnabledForStart','Enabled for alarm start','Zapnuty pro začátek alarmů'),
+('EnabledForStartEnd','Enabled for alarm start & end','Zapnuty pro začátek i konec alarmů'),
+('FailureDetails','Failure Details','Detaily problému'),
+('FailureLocation','Failure Location','Místo problému'),
+('FailureLocationForWorkcenter','Failure locations for Workcenter ','Místa problémů pro pracoviště '),
+('FailureType','Failure Type','Typ problému'),
+('FailureTypesForworkcenter','Failure types for Workcenter ','Typy problémů pro pracoviště '),
+('INTERFACESETTINGS','INTERFACE SETTINGS','NASTAVENÍ PROSTŘEDÍ'),
+('LOCALIZATION','LOCALIZATION','PŘEKLAD'),
+('LocalizedText','Localized text (translation)','Přeložený text'),
+('MTBF','Mean time between failures (MTBF)','Střední doba mezi poruchami (MTBF)'),
+('MTTR','Mean time to repair (MTTR)','Střední doba opravy (MTTR)'),
+('No','No','Ne'),
+('NoDetailsEnabled','No details enabled','Detaily vypnuty'),
+('NoOfFinishedAlarms','Nr. of finished alarms','Počet ukončených alarmů'),
+('NoWorkcentersWithActiveAlarms','--  No workcenters with active alarms --','-- Žádná pracovíště s aktivními alarmy --'),
+('NumberOfAlarms','Number of Alarms','Počet alarmů'),
+('OptionsSeparated','Options (separated by | )','Volby (oddělené | )'),
+('PercentageOfTotal','Percentage of Total','Procento z celku'),
+('ResetToDefaultSettings','Reset to default settings','Vrátit původní nastavení'),
+('SaveAndClose','Save and close','Uložit a zavřít'),
+('SaveID','Save ID','Ulož ID'),
+('SaveName','Save name','Ulož jméno'),
+('SaveText','Save text','Ulož text'),
+('SelectOption','-- Select option --','-- Zvol možnost --'),
+('SettingName','Setting name','Jméno nastavení'),
+('Settings','Settings','Nastavení'),
+('ShowLogEntries','Show Log Entries','Ukaž záznamy'),
+('ShowOnlyActiveAlarms',' Show only workcenters with active alarms',' Zobraz pouze pracoviště s aktivními alarmy'),
+('ShowOnlyFinishedAlarms','Show only finished alarms:','Ukaž pouze ukončené alarmy:'),
+('ShowStatistics','Show Statistics','Ukaž statistiku'),
+('TerminalHeader','Andon Terminal for workcenter','Andon terminál pro pracoviště'),
+('TerminalInstruction1','⇒ If a problem arises, click on the relevant green field.','⇒ Pokud nastane problém, klikněte na příslušné zelené pole.'),
+('TerminalInstruction2','⇒ The field turns red, showing the time since the problem started.','⇒ Pole zčervená a ukazuje čas od začátku problému.'),
+('TerminalInstruction3','⇒ After resolving the issue, click on the red field to change it back to green. ','⇒ Po vyřešení problému klikněte na červené pole a změňte jej zpět na zelené.'),
+('TypeOfDetail','Type of detail','Typ detailu'),
+('WhatIsAndon','What is Andon?','Co je to Andon?'),
+('Workcenter','Workcenter','Pracoviště'),
+('WorkcenterID','Workcenter ID','ID pracoviště'),
+('WorkcenterIDUnique','Workcenter ID (unique)','ID pracoviště (jedinečné)'),
+('WorkcenterName','Workcenter Name','Název pracoviště'),
+('WorkcenterRow','Workcenter Row','Pořadí pracoviště'),
+('WORKCENTERS','WORKCENTERS','PRACOVIŠTĚ'),
+('Yes','Yes','Ano')
+
+
+GO
+
+
+---------------------------------------------------------------------------------------------
+-- AndonLog
+---------------------------------------------------------------------------------------------
+
+CREATE TABLE [dbo].[AndonLog] (
+    [ID]              INT           IDENTITY (1, 1) NOT NULL,
+    [WorkcenterID]    VARCHAR (50)  NOT NULL,
+    [WorkcenterName]  VARCHAR (MAX) NULL,
+    [StatusIndex]     INT           NOT NULL,
+    [AlarmName]       VARCHAR (MAX) NULL,
+    [OldStatus]       VARCHAR (MAX) NOT NULL,
+    [NewStatus]       VARCHAR (MAX) NOT NULL,
+    [ChangeDateTime]  DATETIME2 (7) NOT NULL,
+    [AlarmStartTime]  DATETIME2 (7) NULL,
+    [AlarmEndTime]    DATETIME2 (7) NULL,
+    [AlarmStartText1] VARCHAR (MAX) NULL,
+    [AlarmStartText2] VARCHAR (MAX) NULL,
+    [AlarmStartText3] VARCHAR (MAX) NULL,
+    [AlarmEndText1]   VARCHAR (MAX) NULL,
+    [AlarmEndText2]   VARCHAR (MAX) NULL,
+    [AlarmEndText3]   VARCHAR (MAX) NULL,
+    [AlarmEndText4]   VARCHAR (MAX) NULL,
+    CONSTRAINT [PK_AndonLog4] PRIMARY KEY CLUSTERED ([ID] ASC)
+);
