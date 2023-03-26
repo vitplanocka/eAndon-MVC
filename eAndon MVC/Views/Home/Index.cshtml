@@ -13,18 +13,78 @@
 }
 
 
-
-<div class="container"> 
+<div class="container">
     <span class="pageTitle">@translations.FirstOrDefault(t => t.Id == "WhatIsAndon")?.Text</span>
     <div class="row">
-        <div class="col-md-6">
-
-            <p>Andon is a popular tool used in Lean Manufacturing. It was originally pioneered by Toyota as a method to visualize problems, help create employee's awareness about targets and non-standard conditions, and promote leadership behavior. It is based on the Jidōka methodology in the Toyota Production system that encourages operators to recognize a deviation from the standard and stop work and call supervisors or support staff who can help solve the deviation. </p>
+        <div class="col-md-12">
+            <img src="~/Images/pkmjerei.jpeg" alt="Andon principle illustration" class="image-float" width="200" />
+            <p>Andon is a popular tool used in Lean Manufacturing. It was originally pioneered by Toyota as a method to visualize problems, help create employee's awareness about targets and non-standard conditions, and promote leadership behavior. It is based on the Jidōka methodology in the Toyota Production system that encourages operators to recognize a deviation from the standard and stop work and call supervisors or support staff who can help solve the deviation.</p>
+            <img src="~/Images/Andon_cord.png" alt="Andon cord" class="float-left" width="300" style="margin: 10px; border: 2px solid black;" />
             <p>Most Japanese factories display a variation of the sign 「止める・呼ぶ・待つ」- Stop-Call-Wait to remind operators of this expected behavior. Andon is used to visualize problems, create awareness about targets and non-standard conditions, and promote leadership behavior.</p>
             <p>When a manufacturing line is stopped, Andon lights are turned on to signal the issue, which helps identify the specific location of the problem. This reduces waste, improves quality, and helps companies become more efficient. By implementing Andon, companies have experienced benefits such as reduced downtime, increased productivity, and improved communication among employees.</p>
         </div>
-        <div class="col-md-6">
-            <img src="~/Images/pkmjerei.jpeg" height="300" alt="Andon principle illustration" />
+    </div>
+</div>
+<p>&nbsp;</p>
+<div class="container">
+    <span class="pageTitle">App concept</span>
+    <div class="row">
+        <div class="col-md-12">
+            <img src="~/Images/Andon_diagram.png" alt="Terminals and overview" class="image-float" width="500" style="border: 2px solid black;" />
+            <p>The app is composed of two primary components: <b>Terminals</b> and the <b>Overview</b> screen. Positioned near workstations or production lines, Terminals allow operators or team leaders to activate an alarm when an issue occurs at a specific workstation. The terminal application is usually accessed through a browser tab on a nearby computer, but it can also be operated via a mobile phone by the workstation's operator.</p>
+            <p>The Overview Screen presents the status of all configured Terminals, offering a comprehensive snapshot of the entire production process. This screen is typically displayed on a large monitor or TV on the shop floor or a team leader's or supervisor's computer, facilitating rapid evaluation of the overall production status.</p>
+            <p>Organizations have the option to run the app on their intranet or an internet server. Since both Terminals and Overview Screens are connected to the same server, any alarm activated at a Terminal is instantaneously reflected on all Overview Screens, ensuring real-time communication.</p>  </div>
+    </div>
+</div>
+<p>&nbsp;</p>
+<div class="container">
+    <span class="pageTitle">Using the app</span>
+    <div class="row">
+        <div class="col-md-12">
+            <p>When a problem occurs at a workstation, click the green field corresponding to the incident in the relevant Terminal screen. If specific details are available for the alarm, you can input additional information, such as the location of the failure, the type of failure, or any other pertinent details in the form of free text. Once entered, the green field will change to red, and a timer will begin to count the seconds or minutes since the alarm was activated.</p>
+            <p>This information will also be immediately reflected on the <a asp-area="" asp-controller="Home" asp-action="Overview">Overview</a> visualization.</p>
+            <p>After resolving the alarm at the workstation, click the red field in the Terminal to reset the alarm status back to green.</p>
+            <img src="~/Images/Overview.png" alt="starting an alarm" width="800" />
+            <p>&nbsp;</p>
+            <p>Logs of triggered alarms can be found in the <a asp-area="" asp-controller="Home" asp-action="Log">Logs</a> tab, while Pareto diagrams of the alarms are available in the <a asp-area="" asp-controller="Home" asp-action="Statistics">Statistics</a> page.</p>
+            <img src="~/Images/Statistics.png" alt="starting an alarm" width="700" style="border: 2px solid black;" />
+            <p></p>
         </div>
     </div>
 </div>
+<p>&nbsp;</p>
+<div class="container">
+    <span class="pageTitle">Setting up the app </span>
+    <div class="row">
+        <div class="col-md-12">
+            <p>By accessing the <a asp-area="" asp-controller="Settings" asp-action="Settings">Settings</a> page, you can tailor the app to suit your organization or process requirements. This customization involves:</p>
+            <ul>
+                <li>Adding, removing, or renaming terminals to accurately represent your existing workstations</li>
+                <li>Creating, deleting, or modifying alarm types, along with specifying if additional details should be provided for each alarm</li>
+                <li>Adjusting the app's text content or translating it to another language for localization purposes</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+/* General styles */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .pageTitle {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    /* Image styles */
+    .image-float {
+        float: right;
+        margin-left: 20px;
+        margin-bottom: 20px;
+    }
+
+</style>           
